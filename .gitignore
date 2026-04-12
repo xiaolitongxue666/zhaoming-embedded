@@ -1,0 +1,27 @@
+# 编译产物（中间文件）
+*.o
+*.obj
+*.out
+*.elf
+*.bin
+*.hex
+*.map
+
+# 注意：demo.exe 故意保留在仓库中（学生可直接双击运行）
+# 不要把 *.exe 加到这里
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 临时文件
+*.tmp
+*.bak
