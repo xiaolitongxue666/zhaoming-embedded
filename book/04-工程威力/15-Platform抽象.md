@@ -760,7 +760,7 @@ Platform 层 platform_*.c      物理操作
 
 中间件不是凭空多出来的"过度设计"。它的判据是：**当业务语义和硬件操作不是一对一映射的时候**，中间件就值得引入。"报警 → 三盏灯协同（红灯主报、绿灯熄灭、蜂鸣器响 1 秒）"是一对多映射，写在 app 里 app 就有了硬件知识，写在 led.c 里 led.c 就有了业务知识，都不对。中间件吸收这个错配。
 
-ch15 的配套代码没有中间件层（教学简化），ch19 的工业实战章会展开一个完整的 indicator 中间件案例。
+ch15 的配套代码没有中间件层（教学简化）。ch19 的工业实战章会列出主控板用到的几个中间件库（环形缓冲、shell、日志、按键），看一眼工业代码里这一层是什么形态。
 
 ### 15.10.10 platform_ops 的字段规模
 
@@ -802,7 +802,7 @@ struct platform_ops {
 
 20-30 个字段。每家芯片提供一份完整实现。
 
-字段太多了拆不拆？看你项目。SOLID 接口隔离原则会建议拆成 `gpio_ops / i2c_ops / spi_ops / ...` 多个小表。Linux 内核走的就是这条路（没有一个大 platform_ops，而是一堆 subsystem 各自的 ops 表）。本书 ch16 会展开 Linux 的多个 ops 表。
+字段太多了拆不拆？看你项目。SOLID 接口隔离原则会建议拆成 `gpio_ops / i2c_ops / spi_ops / ...` 多个小表。Linux 内核走的就是这条路（没有一个大 platform_ops，而是一堆 subsystem 各自的 ops 表）。本书 ch16 会展开 Linux 的两组典型 ops 表（`gpio_chip` / `file_operations`）。
 
 ## 15.11 你现在的代码在 STM32 上长什么样
 
