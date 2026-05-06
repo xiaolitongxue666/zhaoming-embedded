@@ -1,52 +1,95 @@
 /* SPDX-License-Identifier: MIT */
 /*
- * main.c - 同一个 led_gpio_on, 不同的 on_func, 不同的行为
+ * main.c - 函数指针变量演示
  *
- * 红灯填 gpio_on_pull_high  (拉高点亮)
- * 绿灯填 gpio_on_pull_low   (拉低点亮，低有效)
+ * 本章核心 (见 ch07 § 7.4):
+ *   一个变量 fp 能存"接受 int、返回 void"的函数地址.
+ *   函数名不带括号 = 取地址 (存号码)
+ *   fp(15)             = 通过变量调用 (拨号)
+ *   换一个号码存进去, 同一行 fp(15) 拨通的就是另一个函数.
  *
- * 应用层都调 led_gpio_on(&xxx_led), 不管底下走哪一支.
+ * 本章不引入 LED 结构, 不引入 platform 抽象, gpio_on / pwm_on /
+ * i2c_on 只是 printf 占位, 用来让 fp 能跳到不同地址跑出不同输出.
+ * 真实硬件实现 (HAL_GPIO_WritePin / sysfs write) 见 stm32-snippet
+ * 和 linux-snippet, 对函数指针主线本身没有影响.
  *
- * 还演示了"运行时换号码": 给红灯把 on_func 换成 pull_low,
- * 不重新 init, 行为立刻变.
+ * 所有函数签名都是 void (*)(int) 一致 - 这样同一个 fp 能存任何一个,
+ * 这是函数指针的硬约束 (类型不一致编译报错). 详见 ch07 § 7.3.
  */
 
 #include <stdio.h>
-#include "led.h"
+
+/* ---- 三种 LED 的 on / off 占位实现 ---- */
+
+static void gpio_on(int pin)
+{
+	printf("  [GPIO] pin %d ON\n", pin);
+}
+
+static void gpio_off(int pin)
+{
+	printf("  [GPIO] pin %d OFF\n", pin);
+}
+
+static void pwm_on(int channel)
+{
+	printf("  [PWM] channel %d ON (duty 100)\n", channel);
+}
+
+static void pwm_off(int channel)
+{
+	printf("  [PWM] channel %d OFF\n", channel);
+}
+
+static void i2c_on(int addr)
+{
+	printf("  [I2C] addr 0x%02X ON (cmd 0x01)\n", addr);
+}
+
+static void i2c_off(int addr)
+{
+	printf("  [I2C] addr 0x%02X OFF (cmd 0x00)\n", addr);
+}
+
+/* ---- 主流程: 一个 fp, 三种号码, 三种行为 ---- */
 
 int main(void)
 {
-	struct led_gpio red_led;
-	struct led_gpio green_led;
+	void (*fp)(int);   /* 一个变量, 能存"接受 int、返回 void"的函数地址 */
 
 	printf("========================================\n");
-	printf("  Function pointer field: swap behavior.\n");
-	printf("  led_gpio_on() calls me->on_func(me).\n");
+	printf("  Function pointer = a variable holding code address.\n");
+	printf("  Same fp, different number, different call.\n");
 	printf("========================================\n\n");
 
-	printf("--- Init red_led with pull_high on_func ---\n");
-	led_gpio_init(&red_led, "red", 13, gpio_on_pull_high);
+	/*
+	 * 存号码: 函数名不带括号 = 取地址.
+	 * 拨号:   fp(15) = 通过变量调用, 实际跳到 gpio_on 那段机器码.
+	 */
+	printf("--- fp = gpio_on; fp(15); ---\n");
+	fp = gpio_on;
+	fp(15);
 
-	printf("\n--- Init green_led with pull_low on_func ---\n");
-	led_gpio_init(&green_led, "green", 14, gpio_on_pull_low);
+	printf("\n--- fp = pwm_on; fp(15); ---\n");
+	fp = pwm_on;
+	fp(15);
 
-	printf("\n--- led_gpio_on(&red_led) -> pull_high ---\n");
-	led_gpio_on(&red_led);
+	printf("\n--- fp = i2c_on; fp(0x50); ---\n");
+	fp = i2c_on;
+	fp(0x50);
 
-	printf("\n--- led_gpio_on(&green_led) -> pull_low ---\n");
-	led_gpio_on(&green_led);
-
-	printf("\n--- swap red_led on_func at runtime to pull_low ---\n");
-	red_led.on_func = gpio_on_pull_low;
-	led_gpio_on(&red_led);
-
-	printf("\n--- Cleanup ---\n");
-	led_gpio_off(&red_led);
-	led_gpio_off(&green_led);
+	/* off 系列同一个套路, 同一个 fp, 换三次号码. */
+	printf("\n--- swap to off-functions ---\n");
+	fp = gpio_off;
+	fp(15);
+	fp = pwm_off;
+	fp(15);
+	fp = i2c_off;
+	fp(0x50);
 
 	printf("\n========================================\n");
-	printf("  led_gpio_on stays one line of code.\n");
-	printf("  on_func field decides actual behavior.\n");
+	printf("  Same variable fp.\n");
+	printf("  Three numbers, three behaviors.\n");
 	printf("========================================\n");
 
 	printf("\nPress Enter to exit...\n");

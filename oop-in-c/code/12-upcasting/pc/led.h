@@ -74,7 +74,7 @@ int led_set_brightness(struct led_base *me, uint8_t brightness);
  *
  * on_level 让同一份 led_gpio 子类支持两种接法: 高电平点亮 (LED
  * 阴极接 GPIO, 阳极接 VCC) / 低电平点亮 (反过来, LED 共阳极).
- * 不用为这两种接法各写一个 on_func, 用 bool 字段区分就行.
+ * 不用为这两种接法各写一个 led_gpio 子类, 用 bool 字段区分就行.
  */
 struct led_gpio {
 	struct led_base base;       /* 父类, 第 0 字段 (向上转型不变量) */

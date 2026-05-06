@@ -31,7 +31,7 @@ oop-in-c/code/<ch>-<topic>/
 | ch04 | `04-data-classification/` | 数据三级归位（实例字段 / 模块 static / 只读 const），按场景选静态 / 池 / 动态分配 |
 | ch05 | `05-hal-mapping/` | 不引入新概念，打开 ST HAL 源码漫游 BSRR 寄存器 |
 | ch06 | `06-inherit-pain/` | 继承痛点，引入 `struct led_base` 提取共有字段 pin |
-| ch07 | `07-function-pointer/` | 函数指针入门，`int (*on_func)(struct led *)` 字段 |
+| ch07 | `07-function-pointer/` | 函数指针入门，独立变量 `void (*fp)(int)` 演示存号码 + 拨号 |
 | ch08 | `08-callback/` | 函数指针传参，注册 / 拆解 callback |
 | ch09 | `09-ops-table/` | ops 操作表雏形，`struct led_ops { on, off, toggle }` |
 | ch10 | `10-vptr/` | ops 放进对象，`const struct led_ops *ops` 字段 |

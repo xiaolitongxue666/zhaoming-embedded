@@ -21,8 +21,9 @@
  *    通知应用层"的标准做法 -- driver 不 #include 应用层头文件,
  *    靠预留回调字段解耦.
  *
- * 子类 struct led_gpio 这一章简化到只有 base + pin 两个字段
- * (ch07 演示的子类 on_func 字段在本章不保留, 集中讲"函数指针当参数").
+ * 子类 struct led_gpio 这一章只有 base + pin 两个字段.
+ * (ch07 演示了独立函数指针变量, 没有把指针塞进 struct;
+ *  本章把函数指针当参数传, 是函数指针的下一种用法.)
  * ops 系统化要等 ch09 引入 struct led_ops.
  */
 

@@ -1,54 +1,45 @@
 /* SPDX-License-Identifier: MIT */
 /*
- * led_stm32.c - 函数指针字段在 STM32 上的样子
+ * led_stm32.c - 函数指针变量在 STM32 上的样子
  *
- * led.h / led.c / main.c 一字不改. 平台胶水继续 ch01 的函数式包装.
+ * 本章主线只演示独立函数指针变量本身 (见 ch07 § 7.4),
+ * 没有把指针塞进任何 struct, 也不依赖 LED 结构.
  *
- * 一个真实场景: 同一颗 LED 引脚, 调试模式下用 gpio-style (亮即开),
- * 量产模式下用 pwm-style (按 brightness 调光). 出厂烧录决定填哪个
- * on_func, 不重新编译 led.c.
+ * STM32 上 gpio_on / gpio_off 的实现就是 ch01 那一套 HAL 调用,
+ * 没有引入新的胶水. 把 gpio_on 的地址存进 fp, 通过 fp 调用,
+ * 跑出来的指令序列和直接调 gpio_on 几乎一样, 多一次 LDR (从 fp
+ * 取地址) + 一次间接 BLX (跳到那个地址).
  */
 
-#include "led.h"
+#include <stdint.h>
+#include <stdbool.h>
 #include "stm32f4xx_hal.h"
 
-void platform_gpio_init(uint8_t pin, uint8_t mode)
+/* GPIO 风格: 拉高/拉低 GPIOA 上某个引脚 */
+void gpio_on(uint8_t pin)
 {
-	GPIO_InitTypeDef cfg = {0};
-
-	__HAL_RCC_GPIOA_CLK_ENABLE();
-
-	cfg.Pin   = (uint16_t)(1U << pin);
-	cfg.Mode  = (mode == GPIO_MODE_OUTPUT) ?
-	            GPIO_MODE_OUTPUT_PP : GPIO_MODE_INPUT;
-	cfg.Pull  = GPIO_NOPULL;
-	cfg.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(GPIOA, &cfg);
+	HAL_GPIO_WritePin(GPIOA, (uint16_t)(1U << pin), GPIO_PIN_SET);
 }
 
-void platform_gpio_deinit(uint8_t pin)
+void gpio_off(uint8_t pin)
 {
-	HAL_GPIO_DeInit(GPIOA, (uint16_t)(1U << pin));
-}
-
-void platform_gpio_write(uint8_t pin, bool value)
-{
-	HAL_GPIO_WritePin(GPIOA, (uint16_t)(1U << pin),
-	                  value ? GPIO_PIN_SET : GPIO_PIN_RESET);
-}
-
-bool platform_gpio_read(uint8_t pin)
-{
-	return HAL_GPIO_ReadPin(GPIOA, (uint16_t)(1U << pin)) == GPIO_PIN_SET;
+	HAL_GPIO_WritePin(GPIOA, (uint16_t)(1U << pin), GPIO_PIN_RESET);
 }
 
 /*
- * 调用 (节选):
+ * 调用方 (节选):
  *
- *   struct led red_led;
- *   led_init(&red_led, 13, led_on_gpio_style);   // 简单模式
- *   led_on(&red_led);
+ *   void (*fp)(uint8_t);
+ *   fp = gpio_on;
+ *   fp(13);                 // 实际调 gpio_on(13), GPIOA Pin13 拉高
  *
- *   // 调试模式想换成 pwm-style 不需要重新编译 led.c
- *   red_led.on_func = led_on_pwm_style;
+ *   fp = gpio_off;
+ *   fp(13);                 // 同一行 fp 调用, 这次拨通 gpio_off
+ *
+ * ARM Cortex-M4 上 fp(13) 编译成:
+ *   LDR  r3, [fp_addr]      ; r3 = fp 里存的地址
+ *   MOV  r0, #13            ; 第一个参数走 r0
+ *   BLX  r3                 ; 间接跳转
+ *
+ * 见 ch07 § 7.6.5 ABI 章节.
  */
