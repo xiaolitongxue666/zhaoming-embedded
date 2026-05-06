@@ -8,16 +8,16 @@
  *
  * 1) test_led(me, on, off) - 见 ch08 § 8.2:
  *    test_led 自己不写死调谁的 on/off. 调用方传函数指针进来, 让
- *    test_led 在内部"代为拨号". 这是回调机制最朴素的形态, 也叫
- *    策略模式 (Strategy pattern).
+ *    test_led 在内部"代为拨号". 视频金句: 函数指针的本质是延迟决定,
+ *    不是现在就定死, 而是到时候再说.
  *
  *    关键好处: 测试时想临时换一个调试版的 on (比如先打 log 再开灯),
  *    不用 mutate 实例的字段. 字段污染了下次正常调用就乱套, 直接
  *    传参不留痕.
  *
- * 2) led_register_state_cb (在 led_base.h 声明) - 见 ch08 § 8.3:
+ * 2) led_register_state_cb (在 led_base.h 声明) - 见 ch08 § 8.7:
  *    应用层把自己的函数地址挂到 led_base.on_state_change 字段上,
- *    led_on / led_off 状态翻转时回调一次. 这是工业代码里"驱动
+ *    led_on / led_off 状态翻转时反过来调一次. 这是工业代码里"驱动
  *    通知应用层"的标准做法 -- driver 不 #include 应用层头文件,
  *    靠预留回调字段解耦.
  *

@@ -47,6 +47,8 @@ test_led(&red_led.base,
 
 编译器看不出来。类型对就放行。运行起来，开灯调到了 off 函数，关灯调到了 on 函数。该亮的时候灭，该灭的时候亮。这种 bug 能查一天。
 
+![参数列表爆炸](../assets/ch09/slide1_参数列表爆炸.png)
+
 ## 9.2 朴素方案：靠注释和命名
 
 最朴素的应对：变量名起严谨点，参数顺序写注释。
@@ -65,6 +67,8 @@ test_led(&red_led.base,
 ## 9.3 把多个函数指针装进一个 struct
 
 一个观察：`on / off / toggle` 是一组绑死的东西。它们一起描述了"一种 LED 的所有行为"。GPIO 风格 LED 这一组，PWM 风格 LED 那一组。
+
+注意 ops 表里只装"**做法不同**"的行为。`on` 一类函数 GPIO LED 是拉电平，PWM LED 是配占空比，I2C LED 是发命令，同一个动作每种实现都不一样，所以要做成函数指针让运行时绑定。`get_name`、`get_state` 这种只是读父类字段的函数不用进 ops 表，沿用 ch06 的 `led_get_name(&xxx.base)` 直接读 base 数据就行。**做法不同的进 ops 表，读数据的不进**。这个判断准则下一章会反复用到。
 
 把一组绑死的东西打包，C 里的工具叫 struct。
 
@@ -109,7 +113,9 @@ test_led(&red_led.base, &led_ops_gpio);
 
 参数列表从 4 个塞到了 1 个。`test_led` 内部按名字访问：`ops->on` 永远是 on，`ops->off` 永远是 off，不可能传反。编译器在初始化 `led_ops_gpio` 时帮你查 `.on` 这个字段类型对不对（不对就编译报错）。
 
-![参数列表爆炸](../assets/ch09/slide1_参数列表爆炸.png)
+散装的函数指针装订成一本电话簿。散装号码丢了找不到，电话簿翻开就有，一个不少。
+
+![LedOps struct](../assets/ch09/slide3_LedOps_struct.png)
 
 ## 9.4 typedef 给函数指针起名字
 
@@ -164,8 +170,6 @@ extern const struct led_ops led_ops_pwm;
 ```
 
 调用方拿到 `&led_ops_gpio` 就是 ops 表的地址。
-
-![LedOps struct](../assets/ch09/slide3_LedOps_struct.png)
 
 ## 9.6 这个东西叫什么
 
@@ -313,9 +317,9 @@ LDR  r3, [r0, #0]    ; r0 = ops, 取 ops 表第 0 个字段 = on 的地址 (3 cy
 BLX  r3              ; 间接跳转 (3 cycle)
 ```
 
-和 ch07 的"struct 字段里的函数指针"开销一样：一次 LDR + 一次 BLX，约 28 ns @ 168 MHz。
+和上一章独立函数指针变量的调用开销一样：一次 LDR + 一次 BLX，约 28 ns @ 168 MHz。从 ops 表第 0 个字段读 on 地址走的是编译期常量偏移，没有额外的运行时计算。
 
-C++ virtual 函数调用就是这两条指令。Stroustrup 那句"零成本抽象"在 vcall 这里要打个小折扣（间接跳转 = 不能 inline、CPU branch predictor 命中率低），这是工程上完全可接受的代价。
+C++ virtual 函数调用就是这两条指令。Stroustrup 那句"零成本抽象"在 vcall 这里要打个小折扣（间接跳转编译器没法 inline，CPU branch predictor 命中率也低），但这是工程上完全可接受的代价。
 
 ### 9.7.6 为什么 ops 不写在 led_base 里
 
@@ -416,6 +420,8 @@ make
 ![金句](../assets/ch09/slide5_金句.png)
 
 视频里把这一章叫做"散装电话号码 → 电话簿"。散装函数指针绑成一组共享名字的"号码本"，按名取号永远不会取错。
+
+视频金句：**结构化不是束缚，是让混乱变得可管理**。散装号码会丢，电话簿不会。
 
 ## 下一章
 

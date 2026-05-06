@@ -13,11 +13,12 @@
  * 答案: 在 base 里预留一个函数指针字段 on_state_change. 应用层
  * 调 led_register_state_cb(...) 把自己的函数地址挂进来; led_on /
  * led_off 状态翻转后调一下这个字段. led.c 不知道应用层是谁, 它
- * 只调存好的函数指针. 这就是好莱坞原则 "Don't call us, we'll
- * call you".
+ * 只调存好的函数指针. 应用层是被动等待 driver 调过来, 而不是主动
+ * 询问 driver, 这是分层解耦的常见做法.
  *
- * typedef led_state_cb 给函数指针类型起短名, 见 ch08 § 8.4. 这是
- * 少数 Linus 也支持的 typedef 例外 (类型字面量太长, 起短名纯收益).
+ * typedef led_state_cb 给函数指针类型起短名 (见 ch08 § 8.7 衍生场景
+ * 一节). 函数指针 typedef 是少数 Linus 也支持的 typedef 例外, 因为
+ * 类型字面量太长, 起短名纯收益. typedef 的细节展开见 ch09 § 9.4.
  *
  * 注: ch07 演示了独立函数指针变量 (没有把指针塞进 struct), ch08
  * 的焦点是"函数指针当参数 / 当回调字段", 子类形态和 ch06 一致.
@@ -45,8 +46,8 @@ struct led_base {
 	/*
 	 * 状态变化回调字段, 可为 NULL (NULL 表示没人监听).
 	 * led_on / led_off 内部会先 NULL check 再调, 不允许跳到地址 0.
-	 * 工业代码里这个字段绝大多数在启动期一次填好就再不动, 避免
-	 * 任务/中断之间的 TOCTOU 竞态 (见 ch08 § 8.6.2.2).
+	 * 工业代码里这个字段绝大多数在启动期一次填好就再不动 (避免
+	 * 任务/中断并发改写带来的竞态).
 	 */
 	led_state_cb on_state_change;
 };
