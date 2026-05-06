@@ -1,56 +1,48 @@
 /* SPDX-License-Identifier: MIT */
 /*
- * led.h - LED 模块对外接口（菜单）
+ * led.h - LED 模块对外接口（契约）
  *
- * 见书 ch02 § 2.3 头文件 = 菜单 + § 2.4 信息隐藏。
+ * 见书 ch02 § 2.3 头文件契约 + § 2.4 信息隐藏。
  *
- * ch02 的核心改动：
- *   ch01 里 struct led 的字段 pin / brightness / is_on 是公开的，
- *   任何调用方都能 me->pin = 999 把它弄坏 —— 同事改一行 LED 全乱。
+ * ch02 在 ch01 基础上的真实增量只有三件:
+ *   1. struct led 字段每个挂 "private" 注释，明示外部别直接写
+ *   2. led.c 里的 update_hardware / brightness_valid 加 static，
+ *      链接期就让外部看不到这些内部工具函数
+ *   3. 加 led_get_state API: 外部要读字段也走 API，不直接读 me->is_on
  *
- *   这一章只做一件事：把字段定义从 led.h 搬到 led.c，
- *   led.h 里只留 struct led 的 forward declaration（前向声明）。
- *   外部代码看得到"有这么个类型"，但看不到字段，也就改不了 ——
- *   编译器在 me->pin = 999 这一行直接报
- *   "invalid use of undefined type"，0 漏网概率。
+ * 字段还在 .h 公开，没有藏到 .c。这是 C 圈子主流做法 (nginx / Redis /
+ * LVGL / FreeRTOS / Linux 内核大部分驱动)。字段公开是为了让 ch06 起
+ * 子类能把 struct led_base base 嵌进自己的第一个字段，做继承。字段藏 .c
+ * 之后子类源文件直接编译报错。
  *
- *   字段名一字不动（pin / brightness / is_on），改的只是 visibility。
- *
- * 一句话：
- *   .h 暴露能调的函数（菜单），.c 藏住数据细节（后厨）。
- *
- * 这种"看得到指针、看不到字段"的写法叫不透明指针（opaque pointer）。
- * libc FILE *、POSIX pthread_t、Win32 HANDLE、Linux 内核 struct file *
- * 都是这一形态，是工业级 C 库跨二进制边界的标准做法。
+ * 拦截 me->pin = 999 这一行靠的是工程纪律: "private" 注释 + 命名
+ * 一致 + code review。三道关一起上，业内 99% 的 C 项目这么做。完全靠
+ * 编译器拦的方案叫不透明指针 (FILE * / pthread_t / sqlite3 *)，是跨
+ * 二进制库 ABI 边界的写法，本书 OOP 主线 18 章不用。详见书 § 2.6.3。
  */
 
 #ifndef LED_H
 #define LED_H
 
-#include <stddef.h>
 #include "platform.h"
 
-/*
- * 前向声明：告诉编译器有这个类型，字段定义在 led.c 里。
- * 外部代码只能用 struct led * 作指针变量，不能定义 struct led 实例
- * （也读不到字段）。这就是 opaque pointer（不透明指针）的最朴素形态。
- */
-struct led;
+struct led {
+	uint8_t pin;            /* private: 通过 led_init 设置 */
+	uint8_t brightness;     /* private: 通过 led_set_brightness 设置 */
+	bool    is_on;          /* private: 通过 led_on / led_off 设置 */
+};
 
-/* 工厂函数：分配并初始化一个 led 对象 */
-struct led *led_create(uint8_t pin);
-void        led_destroy(struct led *me);
+/* 生命周期 */
+int led_init(struct led *me, uint8_t pin);
+int led_deinit(struct led *me);
 
-/* 操作函数：第一个参数都是 me，对应"这是哪一颗 LED" */
+/* 操作 */
 int led_on(struct led *me);
 int led_off(struct led *me);
 int led_toggle(struct led *me);
 int led_set_brightness(struct led *me, uint8_t brightness);
 
-/*
- * 状态查询：外部不直接读字段，走这个 API。
- * is_on / brightness 任意一个传 NULL 表示"不关心这一项"。
- */
+/* 查询: 外部要读字段也走 API */
 int led_get_state(const struct led *me, bool *is_on, uint8_t *brightness);
 
 #endif /* LED_H */

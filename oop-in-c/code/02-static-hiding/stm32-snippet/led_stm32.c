@@ -1,12 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 /*
- * led_stm32.c - 同一份 led_create / led_on 在 STM32 上长什么样
+ * led_stm32.c - 同一份 led_init / led_on 在 STM32 上长什么样
  *
  * 这是片段，不是完整工程。完整 STM32 工程见附录 B。
  *
- * 关键观察：led.h / led.c / main.c 一字不改。
- * 字段还藏在 led.c 里，外部 main.c 看不到 pin / brightness / is_on。
- * 变化的只是下面这层 platform_*.c —— 平台抽象层最直接的威力。
+ * 关键观察：led.h / led.c / main.c 一字不改。字段在 led.h 公开（标了
+ * "private" 注释），update_hardware / brightness_valid 在 led.c 里加了
+ * static。变化的只是下面这层 platform_*.c, 平台抽象层最直接的威力。
  */
 
 #include "platform.h"
@@ -50,11 +50,13 @@ bool platform_gpio_read(uint8_t pin)
 /*
  * 应用层调用方式（和 PC 版完全一样）：
  *
- *   struct led *red = led_create(13);
- *   led_on(red);
- *   red->pin = 999;        // 编译报错: invalid use of undefined type
- *   led_destroy(red);
+ *   struct led red;
+ *   led_init(&red, 13);
+ *   led_on(&red);
+ *   // red.pin = 999;          软 private 编译能过，靠纪律拦
+ *   // update_hardware(&red);  硬 private 链接器拦 (static)
+ *   led_deinit(&red);
  *
- * 信息隐藏在 ARM Cortex-M 上和 x86 上行为完全一致：
- * forward declaration 是编译期机制，编译过不去就生成不了 .o，烧录都没机会。
+ * 软 private + 硬 private 在 ARM Cortex-M 上和 x86 上行为完全一致。
+ * 都是工程纪律 + 链接期 static 锁，跨平台规则一致。
  */

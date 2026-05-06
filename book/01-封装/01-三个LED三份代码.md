@@ -321,11 +321,11 @@ typedef struct {
 int led_on(Led_t *me);
 ```
 
-书里不这样写。Linus 在 Linux 内核编码风格文档里专门讲过 typedef struct 是反模式，原文大意：
+书里不这样写。Linus 在 Linux 内核编码风格文档里专门反对 typedef struct，原因不是写起来麻烦，而是 typedef 把"这是一个结构体"这件事藏了起来。
 
-> typedef 是用来藏类型的。如果你藏了"这是一个结构体"这件事，读代码的人就不知道能不能在它上面用 `&`、`->`、`.`，也不知道它能不能直接传给 `sizeof`。
+看到 `int a` 你立刻知道是 4 字节标量，按值传无所谓。看到 `Led_t a` 你不知道它是 4 字节还是 200 字节。`void foo(Led_t a)` 这种按值传函数，栈上可能默默复制 200 字节，性能黑洞看不见。`Led_t a = b;` 也一样：是简单赋值还是 struct 整块复制？struct 里有锁、回调、状态机的时候，复制语义出错很难查。`struct led a` 三个字符就把这些风险摆在面前，每个写 C 的工程师对 `struct` 这俩字都本能小心。
 
-`Led_t` 这个名字告诉你"这是个 LED 类型"，但不告诉你"它是结构体"。`struct led` 这个名字两件事都告诉你了。Linux 内核 4000 万行 C 代码绝大多数 struct 都不 typedef，包括 `struct file`、`struct device`、`struct gpio_chip`。读这本书你以后看内核源码不会觉得陌生。
+Linux 内核 4000 万行 C 代码绝大多数 struct 都不 typedef，包括 `struct file`、`struct device`、`struct gpio_chip`。读这本书你以后看内核源码不会觉得陌生。
 
 唯一例外：函数指针类型适合 typedef（不然 `int (*)(struct led *)` 写起来太丑），第 9 章 ops 表会用到。
 
@@ -393,7 +393,7 @@ struct led_v2_compact {
 };                          /* sizeof = 8 */
 ```
 
-这一点你现在不用记，知道 padding 这件事存在就行。第 4 章讲数据归位时会回到这个话题。
+这一点你现在不用记，知道 padding 这件事存在就行。真要紧凑布局可以用 `__attribute__((packed))` 或 `#pragma pack`，本书不展开。
 
 ### 1.7.6 platform_gpio_write 调到底，最终是写哪个寄存器
 
@@ -415,7 +415,7 @@ STM32 每个 GPIO 端口有一个 BSRR（Bit Set / Reset Register）。这是一
 
 `volatile` 关键字是必须的。它告诉编译器：这个地址的内容随时会变（硬件改的），不要缓存到寄存器里。否则编译器优化后可能"我刚才不是写过 0x58020018 了吗，再读还是同一个值，不用真的 load"，结果你以为写了，实际没写。
 
-这个领域叫 MMIO（Memory-Mapped I/O）：把硬件寄存器映射到 CPU 的地址空间，用普通的内存读写指令操作硬件。第 5 章讲 HAL 映射时会展开。
+这个领域叫 MMIO（Memory-Mapped I/O）：把硬件寄存器映射到 CPU 的地址空间，用普通的内存读写指令操作硬件。ch05 打开 HAL 库源码漫游时你能看到这种映射的真实形态。
 
 ## 1.8 你现在的 LED 在 STM32 上长什么样
 
@@ -516,23 +516,16 @@ Linux 把每个 GPIO 暴露成一个文件 `/sys/class/gpio/gpio13/value`。写 
 
 ## 1.10 工业代码里的 led 长什么样
 
-**这一节是工业终态的早期一瞥，给你一张"未来三个月你会写出什么样的代码"的全景图**。下面要出现的概念——ops 表、虚函数表指针、不透明指针、前向声明、基类层 dispatch——每一个都是后面 ch09 / ch10 / ch11 / ch13 才会系统展开的。**现在不用看懂任何细节**，只要扫一眼"代码最终长这样、应用层调用看不到 ops、换硬件不改应用层"就够了。看完本节回到 § 1.1 继续从最朴素的状态走起，等读完 ch13 再回来重读这一节，那时候每一行都会自动通透。
+**这一节是工业终态的早期一瞥，给你一张"未来三个月你会写出什么样的代码"的全景图**。下面要出现的概念（基类与子类、ops 表 / 虚函数表、基类层 dispatch、纪律式封装）每一个都是后面 ch06 / ch09 / ch10 / ch11 才会系统展开的。**现在不用看懂任何细节**，只要扫一眼"代码最终长这样、应用层调用看不到 ops、换硬件不改应用层"就够了。看完本节回到 1.1 节继续从最朴素的状态走起，等读完 ch11 再回来重读这一节，那时候每一行都会自动通透。
 
-我做的工业控制板项目里，LED 这一块分三个文件：
-
-```c
-/* drivers/led/led.h · 公开头文件，应用层 #include 这个 */
-
-struct led_base;        /* 前向声明，1.10.1 节解释 */
-
-/* 应用层用的 API */
-int led_on(struct led_base *led);
-int led_off(struct led_base *led);
-int led_toggle(struct led_base *led);
-```
+我做的工业控制板项目里，LED 这一块分两层：基类一对 `.h / .c`，每种具体子类（GPIO LED / PWM LED / I²C LED）一对 `.h / .c`。基类那两份长这样：
 
 ```c
-/* drivers/led/led_base.c · 基类实现，所有 LED 子类共用 */
+/* drivers/led/led_base.h · 基类公共头·子类和应用层都 #include */
+
+#include <stdbool.h>
+
+struct led_base;        /* 先声明类型存在，下面 led_ops 要用到它 */
 
 struct led_ops {
 	int (*on)(struct led_base *me);
@@ -546,37 +539,58 @@ struct led_base {
 	bool is_on;                  /* 当前开关状态 */
 };
 
+/* 应用层用的 API：只调下面这三个，看不到也不去碰上面字段 */
+int led_on(struct led_base *led);
+int led_off(struct led_base *led);
+int led_toggle(struct led_base *led);
+
 /* 注：base 里没有 pin / pwm_chan / i2c_addr 这种硬件特定字段。
  * pin 在 led_gpio 子类里、pwm_chan 在 led_pwm 子类里、i2c_addr 在 led_i2c 子类里。
  * 不同硬件方式的 LED 共享 base 接口，硬件细节关在各自子类。
  * 第 6 章讲为什么这样分，第 12 章讲子类怎么向上转型回 base。
  */
+```
 
-/* led_on 是封装层：应用层调它，内部 dispatch 到具体子类的 on */
+```c
+/* drivers/led/led_base.c · 基类实现：把对外接口转发到子类 ops 表 */
+
+#include "led_base.h"
+
 int led_on(struct led_base *led)
 {
+	int ret;
 	if (!led || !led->ops || !led->ops->on)
 		return -1;
-	led->is_on = true;
-	return led->ops->on(led);
+	ret = led->ops->on(led);
+	if (ret == 0)
+		led->is_on = true;
+	return ret;
 }
 
 int led_off(struct led_base *led)
 {
+	int ret;
 	if (!led || !led->ops || !led->ops->off)
 		return -1;
-	led->is_on = false;
-	return led->ops->off(led);
+	ret = led->ops->off(led);
+	if (ret == 0)
+		led->is_on = false;
+	return ret;
 }
 
 int led_toggle(struct led_base *led)
 {
+	int ret;
 	if (!led || !led->ops || !led->ops->toggle)
 		return -1;
-	led->is_on = !led->is_on;
-	return led->ops->toggle(led);
+	ret = led->ops->toggle(led);
+	if (ret == 0)
+		led->is_on = !led->is_on;
+	return ret;
 }
 ```
+
+`is_on` 这种状态字段在 dispatch 成功之后再更新，硬件操作失败时上层状态不会被改脏。工业代码里有的项目省掉 `is_on`、让硬件层每次自查，有的把它放在基类里给上层 query 用，看项目设计。
 
 ```c
 /* environment_cfg/environment_export.h · 公开句柄，应用层用它 */
@@ -595,17 +609,20 @@ led_toggle(green_led);
 
 应用层看到的就是普通函数调用 `led_on(green_led)`。它根本不知道下面有 ops 表、有 dispatch、有具体子类（GPIO LED / PWM LED / I²C LED 等）。这种"应用层只见接口、看不见实现"的写法叫封装层，工业代码里所有驱动都做这件事。
 
-### 1.10.1 前向声明：让头文件只暴露指针，不暴露字段
+### 1.10.1 字段公开但应用层不去碰：纪律式封装
 
-`led.h` 第二行 `struct led_base;` 这一句叫前向声明 (forward declaration)。它告诉编译器："有这么个类型 `struct led_base`，但字段先不展开。"
+`struct led_base` 的字段定义就在 `led_base.h` 头文件里，应用层 `#include "led_base.h"` 之后，技术上写 `green_led->is_on = true` 编译能过。**工业代码里的"封装"，主要靠纪律，不是靠编译器强制**。
 
-接下来 `led.h` 里所有用到 `struct led_base` 的地方都是指针：`int led_on(struct led_base *led);`。指针的 `sizeof` 在所有平台都是固定的（32 位机器 4 字节，64 位机器 8 字节），编译器不需要知道它指向的类型有什么字段就能算出指针变量占多少字节。所以前向声明 + 指针，是完全合法的 C 代码，gcc / clang / armcc 都接受。
+为什么不把字段藏到 `.c` 里、让编译器拒绝外部访问？因为后面 ch06 起要讲继承：每种具体 LED（GPIO / PWM / I²C）都是一个**子类**，子类要把 `struct led_base base;` 作为自己的第一个字段嵌进来。子类源文件得知道 `struct led_base` 的完整字段（要算 sizeof、要对偏移），所以 base 的字段定义必须放在头文件里、给子类可见。**字段藏 `.c` 和继承机制层互斥**：一选了藏，子类就编译过不去。
 
-字段定义放在 `led_base.c` 里。应用层 `#include "led.h"` 后，编译器只看到"`struct led_base` 是某个不完整类型"，**永远查不到 `ops` / `name` / `is_on` 字段的位置**。这意味着应用层就算想写 `green_led->is_on = true` 也写不出来：编译器直接报错 `dereferencing pointer to incomplete type`。状态变更必须走 `led_on(green_led)` 这种封装函数，没法绕过去。
+那应用层为什么不会乱碰？两层纪律一起作用：
 
-这种"`.h` 只暴露指针 + `.c` 藏字段定义"的写法叫不完整类型 (incomplete type) + 不透明指针 (opaque pointer)。Linux 内核大量用这一招：你能看到 `struct file *`，但 `struct file` 的字段定义藏在 `fs/internal.h` 里，普通驱动看不到；`struct device` 同理。Zephyr 的设备模型一样。这是工业级 C 库的标准做法，把"接口稳定"和"实现自由"严格分开：`.c` 里加字段、改字段顺序、重排布局，`.h` 一行不动，应用层不用重新编译。
+- **接口纪律**：每个驱动的 `.h` 顶上写清楚"只调下面这几个函数"，code review 看到外部代码写 `green_led->is_on = true` 直接打回
+- **指针句柄持有**：base 实例本身在驱动 `.c` 文件里 static 分配，应用层只拿 `extern struct led_base *green_led;` 这种指针句柄，从来不在自己代码里 `struct led_base x;` 直接定义实例。能拿到的只是别人给的指针，状态变更走 `led_on(green_led)` 是最自然的选择，绕过去反而费劲。ch04 4.7.8 节会单独讨论这种全局指针句柄合不合理
 
-代价是应用层不能定义 `struct led_base` 实例（编译器不知道 sizeof），所以工业代码里实例都在驱动 `.c` 里 static 分配，应用层只拿到 `extern struct led_base *green_led;` 这种句柄。
+Linux 内核也是这套纪律。`struct device` 几十个字段全部公开在 `include/linux/device.h` 里，谁的代码写 `dev->kobj.parent = NULL` 之类直接绕过 driver core，会被维护者一句话打回。Greg Kroah-Hartman 在内核驱动文档和邮件列表里多次强调这件事，靠的是**编码约定 + review 文化**，不是编译器。Zephyr RTOS、GObject 同一套路。这是 OOP-in-C 继承场景里几乎唯一可行的工业选择。
+
+ch02 会把这套纪律的两件工具讲透：`static` 锁内部工具函数（链接期硬锁）+ `/* private */` 字段注释（命名纪律 + code review 软锁）。同时会单独提一种更严格的隔离——字段彻底藏进 `.c`，编译器直接拒绝外部访问，叫不透明指针。它的真实用武之地是**跨二进制库边界**（libc 的 `FILE *`、POSIX 的 `pthread_t`、`sqlite3 *`、`CURL *`），应用代码和库实现物理分离·这些场景下应用代码不需要继承库类型。一旦涉及继承（这本书后续 18 章主线），就不能用那套写法。
 
 ### 1.10.2 ops 表 + 封装层：让 led_on 一行胶水管所有 LED 子类
 
@@ -623,8 +640,8 @@ led_toggle(green_led);
 
 这就是这本书要让你形成的眼光。拿到一份陌生的工业代码：
 
-- 看到 `struct xxx_base;` 前向声明，知道这是不完整类型 + 不透明指针
-- 看到 `xxx_base { const struct xxx_ops *ops; ... };`，知道这是 ops 表 / 虚函数表
+- 看到 `xxx_base.h` 里 `struct xxx_base { const struct xxx_ops *ops; ... };`，知道这是父类 + ops 表 / 虚函数表
+- 看到 `xxx_base.h` 顶上一行注释"应用层只调下面 API，不要直接访问字段"，知道这是纪律式封装
 - 看到 `xxx_on(handle)` 内部走 `handle->ops->on(handle)`，知道这是 dispatch
 - 看到 `extern xxx_base *yyy;`，知道是别人创建好的句柄
 

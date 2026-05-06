@@ -2,26 +2,19 @@
 /*
  * led.c - LED 模块实现（后厨）
  *
- * struct led 的字段定义只在这个文件里。led.h 只看得到 struct led;
- * 这个 forward declaration，所以外部代码：
+ * 内部工具函数 update_hardware / brightness_valid 加 static, 链接器
+ * 只把它们写成 file-local 符号，外部 .c 文件根本看不到名字，调用就报
+ * undefined reference。这是机制层硬锁。
  *
- *   struct led *me = led_create(13);
- *   me->pin = 999;       <-- 编译报错: invalid use of undefined type
+ * 字段定义还在 led.h 里公开，看 led.h 的人能看到 pin / brightness /
+ * is_on。靠 "private" 注释 + 命名纪律 + code review 让外部别直接
+ * 写字段。这是工程层软锁。
  *
- * 同时，本文件内部用到的工具函数（update_hardware / brightness_valid）
- * 都加 static，外部链接器看不到它们，进一步关闭了一道门。
+ * 两层组合起来的效果，和 C++ 的 private 等价。运行时一行 cost 都没多。
  */
 
 #include "led.h"
 #include <stdio.h>
-#include <stdlib.h>
-
-/* 字段定义：只在 led.c 内可见 */
-struct led {
-	uint8_t pin;            /* GPIO 引脚号 */
-	uint8_t brightness;     /* 当前亮度 0~100 */
-	bool    is_on;          /* 当前开关状态 */
-};
 
 /*
  * static 辅助函数：file-private（文件私有），别的 .c 看不到也调不到。
@@ -38,13 +31,12 @@ static bool brightness_valid(uint8_t brightness)
 	return brightness <= 100;
 }
 
-/* ---- 工厂函数 ---- */
+/* ---- 生命周期 ---- */
 
-struct led *led_create(uint8_t pin)
+int led_init(struct led *me, uint8_t pin)
 {
-	struct led *me = malloc(sizeof(*me));
 	if (!me)
-		return NULL;
+		return -1;
 
 	me->pin = pin;
 	me->brightness = 0;
@@ -54,23 +46,25 @@ struct led *led_create(uint8_t pin)
 	update_hardware(me);
 
 	printf("  [LED] Pin%u initialized\n", (unsigned)pin);
-	return me;
+	return 0;
 }
 
-void led_destroy(struct led *me)
+int led_deinit(struct led *me)
 {
 	if (!me)
-		return;
+		return -1;
 
 	me->is_on = false;
 	update_hardware(me);
 	platform_gpio_deinit(me->pin);
 
+	me->brightness = 0;
+
 	printf("  [LED] Pin%u released\n", (unsigned)me->pin);
-	free(me);
+	return 0;
 }
 
-/* ---- 操作函数 ---- */
+/* ---- 操作 ---- */
 
 int led_on(struct led *me)
 {
@@ -127,6 +121,8 @@ int led_set_brightness(struct led *me, uint8_t brightness)
 	       (unsigned)me->pin, (unsigned)brightness);
 	return 0;
 }
+
+/* ---- 查询 ---- */
 
 int led_get_state(const struct led *me, bool *is_on, uint8_t *brightness)
 {

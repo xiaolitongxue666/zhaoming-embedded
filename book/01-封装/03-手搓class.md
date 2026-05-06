@@ -4,7 +4,7 @@
 
 ## 3.1 一个真实场景
 
-第 2 章你把 LED 模块的字段藏起来了。同事改不动你的数据，你松了一口气。
+第 2 章你给 LED 模块的字段标了 `/* private */`、把内部工具函数加 `static` 锁进了 `.c`。同事改不动你的数据，你松了一口气。
 
 下班前 PM 走过来：明天加一个电机控制模块。
 
@@ -27,7 +27,7 @@ ld: motor.o: in function `init':
 
 你的 `init` 是配 GPIO 的，他的 `init` 是配 PWM 的。但 C 的链接器不管你做什么，只看名字。名字一样，打架。
 
-C 有一个底层规则：所有不加 `static` 的函数，名字必须全局唯一。这叫外部链接（external linkage），是 ANSI C 标准定的。一个函数加了 `static` 它就是文件私有（第 2 章 2.6.5 节讲过）。不加 `static`，它进全局符号表，全工程范围内不能重名。
+C 有一个底层规则：所有不加 `static` 的函数，名字必须全局唯一。这叫外部链接（external linkage），是 ANSI C 标准定的。一个函数加了 `static` 它就是文件私有（第 2 章 2.6.2 节讲过）。不加 `static`，它进全局符号表，全工程范围内不能重名。
 
 项目只有一个模块的时候没问题。两个模块、三个、十个，名字迟早撞。
 
@@ -194,7 +194,7 @@ C++ 把你手动写的前缀变成了编译器管理的类名（namespace + name
 | 章节 | C 语言 | C++ |
 |---|---|---|
 | 第 1 章 | `struct + me` | `class + this` |
-| 第 2 章 | `static + .h/.c 分离` | `private + public` |
+| 第 2 章 | `static + /* private */ 纪律` | `private + public` |
 | 第 3 章 | `前缀 + init/deinit` | `类名 + 构造/析构` |
 
 C 没有 `class`？你天天都在写。
@@ -279,20 +279,7 @@ C++ 的 namespace 在编译时把 `Led::init` 改写成 `_ZN3Led4initEPh` 这样
 
 工业代码里 `module_action` 这种 lowercase + underscore + `_` 分隔的写法是 Linux 内核风格的标准，本书坚持这一种。
 
-### 3.7.5 头文件里 struct led 字段恢复公开了，违反 ch02 教训吗
-
-第 2 章把 `struct led` 字段藏在 `led.c` 里，这一章字段又出现在 `led.h` 里。是不是回退？
-
-不是。这一章关心的是"两个模块和命名规范"，不是"字段可见性"。字段重新公开换来两个好处：
-
-1. 外部能写 `struct led red;` 在栈上分配（不再需要 `led_create / led_destroy` 的堆分配）。
-2. main.c 能直接做 `led_init(&red, 13)` 这种"构造已分配对象"的标准模式。
-
-代价是字段又能被外部 `me->pin = 999` 改坏。这是工程权衡。绝大多数自家应用代码（驱动、设备实例、模块）走的就是这条路：字段公开 + 命名纪律 + `static` 工具函数，因为应用层和驱动层在同一份工程里一起编译，靠 review 和工程文化就够了。GitHub 上 nginx、Redis、LVGL 这一类主流 C 项目都是这种写法。
-
-只有跨二进制库边界（libc `FILE *` / POSIX `pthread_t` / SDK 提供给第三方使用）才坚持 ch02 的不透明指针写法。两条路都成立，根据需求选。
-
-### 3.7.6 链接器冲突的真实长相
+### 3.7.5 链接器冲突的真实长相
 
 `led.c` 里写一个 `init`，`motor.c` 里也写一个 `init`，编译两个 `.o` 文件的时候各自都过。`gcc led.c motor.c -o demo` 在链接阶段才炸：
 
@@ -340,7 +327,7 @@ $ nm motor.o
 
 工业上选前缀不选 `static` 的原因清楚了：要让外部模块能 `led_init(...)`，又不能撞名，加前缀是唯一的路。
 
-### 3.7.7 前缀方案 vs 嵌套方法表方案
+### 3.7.6 前缀方案 vs 嵌套方法表方案
 
 C 语言的"避免冲突"还有第二条路。有些项目走的不是前缀，而是嵌套方法表。形态像这样：
 
@@ -373,7 +360,7 @@ led.on(&red);
 
 到了 ch09-ch11 会引入 ops 表 + vptr，那是嵌套方法表的"工业级正确用法"：用来支持运行时多态，不是用来规避命名冲突。两件事不要混。
 
-### 3.7.8 为什么 motor 多了 direction 和 state 字段
+### 3.7.7 为什么 motor 多了 direction 和 state 字段
 
 `struct motor` 字段是 `pin / pwm_duty / direction / state / initialized`，比 `struct led` 多了 `direction` 和 `state`。
 

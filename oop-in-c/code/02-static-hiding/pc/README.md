@@ -17,18 +17,18 @@ gcc -Wall -Wextra -std=c99 -I../../common -o demo main.c led.c ../../common/plat
 
 ## 看到什么
 
-`led_create()` 返回一个 `struct led *`，main.c 通过这个不透明指针调
-`led_on / led_off / led_set_brightness / led_get_state / led_destroy`
+`struct led` 实例直接放栈上，`led_init(&red, 13)` 初始化，调
+`led_on / led_off / led_set_brightness / led_get_state / led_deinit`
 做完整生命周期。
 
-任意一行 `red->pin = 999;` 取消注释，编译就过不去：
+字段在 `led.h` 公开，每个挂 `/* private */` 注释。`led.c` 内部的
+`update_hardware` / `brightness_valid` 加 `static`，外部 `.c` 看不到。
 
-```
-error: invalid use of undefined type 'struct led'
-```
+试一下两层强度对比：
 
-字段定义在 `led.c` 内部，`led.h` 只有 `struct led;` 这个 forward
-declaration。外部代码根本不知道字段长什么样，自然改不了。
+- 在 main.c 取消注释 `red.pin = 999;`，编译能过，纪律层拦
+- 在 main.c 取消注释 `update_hardware(&red);`，链接器报
+  `undefined reference to update_hardware`，机制层拦
 
 ## Windows 用户
 
