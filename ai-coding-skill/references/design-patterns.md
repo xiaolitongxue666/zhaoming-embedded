@@ -519,12 +519,13 @@ my_device_t *dev = container_of(
 - 每个状态有 entry/exit 动作，状态转换时自动执行
 - 大幅减少重复的事件处理代码
 
-推荐框架：**QPC**（Quantum Platform for C），开源，
+推荐使用事件驱动状态机框架（业内有多家成熟实现可选），
 适合嵌入式实时系统。后续会有配套视频详细讲解，B站搜索「兆鸣嵌入式」观看。
 
 ### 事件驱动架构
 
-HSM通常配合事件驱动的 Active Object 模式使用：
+HSM通常配合事件驱动的 Active Object 模式使用
+（POSA2 / Schmidt 1996 提出的通用并发模式）：
 
 - 每个 Active Object 拥有独立的事件队列和线程
 - 对象之间通过发布-订阅（publish-subscribe）或

@@ -1,0 +1,38 @@
+[book]
+title = "C 语言面向对象编程·嵌入式实战"
+authors = ["兆鸣嵌入式"]
+description = "从一颗 LED 写到 Linux 内核 4000 万行代码。讲透封装、继承、多态在工业级 C 代码里的真实样子。"
+language = "zh-CN"
+src = "book"
+
+[build]
+build-dir = "_build"
+create-missing = false
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "navy"
+git-repository-url = "https://gitee.com/zhao-chengbo/zhaoming_embedded"
+edit-url-template = "https://gitee.com/zhao-chengbo/zhaoming_embedded/edit/master/book/{path}"
+site-url = "/"
+mathjax-support = false
+no-section-label = false
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.search]
+enable = true
+limit-results = 30
+teaser-word-count = 30
+use-boolean-and = true
+boost-title = 2
+boost-hierarchy = 1
+boost-paragraph = 1
+expand = true
+heading-split-level = 3
+
+[output.html.print]
+enable = true
+page-break = true

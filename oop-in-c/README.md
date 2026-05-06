@@ -1,131 +1,102 @@
-# C语言·一个LED讲透面向对象
+# C 语言一个 LED 讲透面向对象（代码包）
 
-> 从struct到Linux内核，用一个LED驱动讲透面向对象。
+[《C 语言面向对象编程·嵌入式实战》](../book/README.md) 一书的配套代码包。
 
----
+每个 EP 子目录对应书中的一章 + 一期视频。代码经过持续维护，每次提交都过编译。
 
-## 系列简介
+## 17 期对应 17 章
 
-这是一套用**C语言实现面向对象**的系列教程。不是理论课，是从一个LED驱动出发，一步步写出工业级代码。
+| 期 | 主题 | 核心概念 | 书章节 |
+|---|---|---|---|
+| EP06 | 三个 LED 你写了三份代码 | struct + me 指针 | [ch1](../book/01-封装/01-三个LED三份代码.md) |
+| EP07 | 你同事改了一行你的 LED 全乱了 | static + 信息隐藏 | ch2 |
+| EP08 | 你用 C 手搓了一个 class | 函数前缀 + init/deinit | ch3 |
+| EP09 | 你的全局变量该死了 | static 变量 + const + 数据归位 | ch4 |
+| EP10 | HAL 库几千个函数就一个套路 | 源码验证（验证课） | ch5 |
+| EP11 | 你的代码一半是重复的 | struct 嵌套 = 继承 | ch6 |
+| EP12 | 写死的函数怎么换 | 函数指针 | ch7 |
+| EP13 | 把号码给别人拨 | 函数指针传参 | ch8 |
+| EP14 | 参数长到换行 | ops 表 = vtable | ch9 |
+| EP15 | ops 放进对象 | 绑定 = vptr | ch10 |
+| EP16 | 同名函数不同行为 | dispatch = vcall | ch11 |
+| EP17 | 一个指针指所有 LED | 向上转型 | ch12 |
+| EP18 | container_of 的地址魔法 | 向下转型 | ch13 |
+| EP19 | 虚函数不实现会怎样 | 纯虚 + 合同防御 | ch14 |
+| EP20 | 300 行砍到 60 行 | 完整框架 | ch15 |
+| EP21 | 为什么 Linux 一点都不难 | Platform 层 | ch16 |
+| EP22 | 4000 万行一招写完 | 内核映射 | ch17 |
 
-**你会学到：**
-- 封装、继承、多态在C语言中怎么实现
-- Linux内核的struct、函数指针、container_of到底在干什么
-- 为什么你天天用的HAL库就是OOP
+## 学完之后
 
-**学完后：**
-- 你能看懂HAL库源码
-- 你能看懂Linux内核驱动的基本框架
-- 你用C写的代码，和C++的class本质上是一回事
+看懂 HAL 库和 Linux 内核驱动的骨架。用 C 写出和 C++ class 等价的代码。换芯片或换 LED 类型时只改驱动文件，应用层一行不动。在面试里把 `container_of`、函数指针、平台抽象讲到底层原理。
 
----
-
-## 学习路径
-
-| 期数 | 主题 | 核心概念 | 金句 |
-|------|------|---------|------|
-| **EP06** | 三个LED你写了三份代码 | struct + me指针 + 多实例 | 封装不是藏代码，是让同一份逻辑服务不同的数据 |
-| **EP07** | 你同事改了一行代码LED全乱了 | static函数 + 头文件 = private + public | 信息隐藏不是不信任——是锁上门，谁都不容易犯错 |
-| **EP08** | 你用C手搓了一个class | 函数前缀 + init/deinit = 类名 + 构造/析构 | C语言没有class？你天天都在写 |
-| **EP09** | 你的全局变量，该死了 | static变量 + const + 数据归位 | 数据没有主人，bug就是主人 |
-| **EP10** | HAL库几千个函数就一个套路 | 源码验证：你学的就是工业标准 | 几千个函数——就这一招 |
-| EP11 | 三种LED一半代码重复 | struct嵌套 = 继承 | *待更新* |
-| EP12 | 一个函数也能当参数传？ | 函数指针 | *待更新* |
-| EP13 | 把函数指针装进一个盒子 | ops结构体 = vtable | *待更新* |
-| EP14 | 能不能让代码自己知道该调谁？ | 向上转型 + 多态dispatch | *待更新* |
-| EP15 | 从LED到Linux | container_of宏 | *待更新* |
-| EP16 | 三千万行代码的秘密武器 | Linux内核OOP全貌 | *待更新* |
-
----
-
-## 目录结构
+## 目录
 
 ```
 oop-in-c/
-├── code/
-│   ├── common/              ← 平台抽象层（PC模拟GPIO）
-│   ├── EP06_封装/           ← 每个EP是一个完整的学习包
-│   │   ├── led.h / led.c   ← 示例代码
-│   │   ├── main.c           ← 演示程序（双击demo.exe可直接运行）
-│   │   ├── demo.exe         ← 编译好的可执行文件
-│   │   ├── EP06_封装.pdf    ← 学习文档（设计说明+视频讲义+代码解读）
-│   │   └── Makefile
-│   ├── EP07_信息隐藏/
-│   ├── EP08_手搓class/
-│   ├── EP09_数据归位/
-│   └── EP10_HAL映射/
-└── README.md                ← 本文件（系列导航）
+├── README.md
+└── code/
+    ├── common/
+    │   ├── platform.h          平台抽象层接口
+    │   └── platform_pc.c       PC 模拟实现
+    ├── EP06_封装/
+    │   ├── led.h / led.c
+    │   ├── main.c
+    │   ├── Makefile
+    │   ├── demo.exe            预编译的 Windows 可执行
+    │   └── EP06_封装.pdf       早期版本文档，最新内容看在线书
+    ├── EP07_信息隐藏/
+    ├── EP08_手搓class/
+    ├── EP09_数据归位/
+    ├── EP10_HAL映射/
+    ├── EP11_提公因式/
+    ├── EP12_函数指针/
+    ...
+    └── EP22_终章/
 ```
 
-每个EP目录就是一个**完整的学习包**——打开文件夹，看PDF学概念，看代码学实现，双击exe看效果。
+每个 EP 目录是一个完整的学习包——打开文件夹，看在线书学概念，看代码学实现，双击 exe 看效果。
 
----
+EP11 之后的代码包正在按视频内容补齐中。
 
-## 如何运行
+## 怎么跑
 
-### 最简单的方式：直接双击
+最简单：Windows 直接双击 `demo.exe`，无需任何工具。运行完会显示 `Press Enter to exit...`，按回车关闭。
 
-每个EP目录里都有编译好的 `demo.exe`（Windows），**双击即可运行**，无需安装任何工具。
-
-程序运行完会显示 `Press Enter to exit...`，按回车关闭。
-
-### 想自己编译？
-
-环境要求：**GCC**（MinGW、MSYS2、Linux自带gcc均可），不需要开发板。
+自己编译需要 GCC（MinGW、MSYS2、Linux 自带 gcc 均可），不需要开发板：
 
 ```bash
-# EP06 示例
 cd oop-in-c/code/EP06_封装
-gcc -Wall -Wextra -I../common -o demo main.c led.c ../common/platform_pc.c
-./demo
-
-# EP07 示例
-cd oop-in-c/code/EP07_信息隐藏
-gcc -Wall -Wextra -I../common -o demo main.c led.c ../common/platform_pc.c
-./demo
-
-# EP08 示例（两个模块）
-cd oop-in-c/code/EP08_手搓class
-gcc -Wall -Wextra -I../common -o demo main.c led.c motor.c ../common/platform_pc.c
-./demo
-
-# EP09 示例（含反面教材）
-cd oop-in-c/code/EP09_数据归位
-gcc -Wall -Wextra -I../common -o demo main.c led.c led_bad.c ../common/platform_pc.c
-./demo
-
-# EP10 示例（HAL风格，不需要common）
-cd oop-in-c/code/EP10_HAL映射
-gcc -Wall -Wextra -o demo main.c hal_gpio.c
+make
 ./demo
 ```
 
-### 有STM32开发板？
+或者直接用 GCC：
 
-代码通过`platform.h`抽象了GPIO操作。如果你有开发板：
-1. 写一个`platform_stm32.c`，实现同样���接口
-2. 编译时用你的`platform_stm32.c`替换`platform_pc.c`
-3. 上层代码一行不改——这就是��台抽象的威力
+```bash
+gcc -Wall -Wextra -I../common -o demo main.c led.c ../common/platform_pc.c
+./demo
+```
 
----
+环境配置看 [setup/README.md](../setup/README.md)。
 
-## C vs C++ 对照表（全系列）
+## 有 STM32 开发板
 
-| C语言写法 | C++写法 | 首次出现 |
-|----------|---------|---------|
-| struct + me指针 | class + this | EP06 |
-| static + .h | private + public | EP07 |
-| 函数前缀 + init/deinit | 类名 + 构造/析构 | EP08 |
-| file-scope static变量 | class static成员 | EP09 |
-| struct嵌套 | class继承 | EP11 |
-| 函数指针 | std::function / lambda | EP12 |
-| ops结构体 | vtable虚函数表 | EP13 |
-| ops dispatch | virtual虚函数 | EP14 |
-| container_of | dynamic_cast（近似） | EP15 |
+代码通过 `platform.h` 抽象了 GPIO 操作。如果有开发板：写一个 `platform_stm32.c` 实现 `platform.h` 同样的接口；编译时用 `platform_stm32.c` 替换 `platform_pc.c`；上层代码一行不改。
 
----
+这就是平台抽象的威力，第 16 章会展开讲。
 
-## 获取更多
+## C 与 C++ 全系列对照
 
-- 公众号搜索 **「兆鸣嵌入式」** 获取完整学习路线
-- 回复「交流」加技术交流群
+| C 写法 | C++ 写法 | 首次出现 |
+|---|---|---|
+| `struct` + me 指针 | `class` + `this` | EP06 / ch1 |
+| `static` + `.h` | `private` + `public` | EP07 / ch2 |
+| 函数前缀 + init/deinit | 类名 + 构造/析构 | EP08 / ch3 |
+| file-scope `static` 变量 | `class` static 成员 | EP09 / ch4 |
+| `struct` 嵌套 | `class` 继承 | EP11 / ch6 |
+| 函数指针 | `std::function` / lambda | EP12 / ch7 |
+| ops 结构体 | vtable 虚函数表 | EP14 / ch9 |
+| ops dispatch | virtual 虚函数 | EP16 / ch11 |
+| `container_of` | `dynamic_cast`（近似） | EP18 / ch13 |
+| Platform 层 | 抽象基类 + 工厂 | EP21 / ch16 |

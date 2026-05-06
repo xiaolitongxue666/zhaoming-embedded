@@ -57,10 +57,10 @@ HAL_StatusTypeDef HAL_SPI_Transmit(
 }
 ```
 
-## QPC / RTC合规性
+## 事件驱动框架 / RTC合规性
 
-如果应用层使用QPC（Quantum Platform for C）或任何
-RTC（Run-To-Completion，运行至完成）执行模型：
+如果应用层使用事件驱动 + 状态机框架（业内有多家成熟实现可选），
+或任何 RTC（Run-To-Completion，运行至完成）执行模型：
 
 ### 非阻塞强制要求
 
@@ -72,11 +72,11 @@ RTC（Run-To-Completion，运行至完成）执行模型：
 4. **事件处理路径中没有互斥锁等待**
 5. **延迟处理** 通过内部工作线程处理可能阻塞的操作
 
-### QPC/RTC下的驱动设计
+### 事件驱动框架 / RTC下的驱动设计
 
 ```
 ┌──────────────────────────────────────────┐
-│ QPC活动对象（运行至完成）                   │
+│ 活动对象（运行至完成）                      │
 │                                          │
 │  on EVENT_SEND_DATA:                     │
 │    driver->SendAsync(data, len);  <-- 立即返回
@@ -144,20 +144,20 @@ FatFS的不同版本差异很大。在使用任何FatFS API之前：
 **关键设计规则——源于历史教训：**
 
 当GPIO中断（或任何硬件ISR）需要通知应用层
-（如QPC活动对象）时，**始终使用高优先级工作线程模式**，
+（如事件驱动框架中的活动对象）时，**始终使用高优先级工作线程模式**，
 而非直接ISR回调。
 
 **错误方案（最初设计，后来不得不返工）：**
 ```
-ISR → callback(status) → Q_NEW_FROM_ISR / QF_PUBLISH_FROM_ISR
+ISR → callback(status) → 框架的 ISR 安全事件分配 / 发布 API
 ```
 直接ISR回调的问题：
 - 强制回调使用ISR安全的API（FromISR变体）
 - 发布的事件进入队列尾部——无法将紧急信号（如掉电）
   优先于已排队的文件写入
 - 将驱动设计与ISR约束耦合
-- `QF_publish_()` 没有LIFO变体；`QACTIVE_POST_LIFO()`
-  仅在任务级可用，无法从ISR调用
+- 多数事件驱动框架的 publish 没有 LIFO 变体；任务级的
+  LIFO 投递 API 一般不允许从 ISR 调用
 
 **正确方案（高优先级工作线程模式）：**
 ```
@@ -165,17 +165,17 @@ ISR → osSemaphoreRelease（极简，ISR安全）
   ↓
 高优先级线程（osPriorityHigh）唤醒 → 读取硬件 → 回调
   ↓
-回调在任务上下文中运行 → 可使用任何RTOS/QPC API
-  → QACTIVE_POST_LIFO 用于紧急信号（队列头部）
-  → QACTIVE_POST 用于普通信号（队列尾部）
+回调在任务上下文中运行 → 可使用任何 RTOS / 事件框架 API
+  → LIFO 投递用于紧急信号（队列头部）
+  → 普通 post 用于普通信号（队列尾部）
 ```
 
 优势：
 - ISR极简（仅一次信号量释放）
 - 回调在任务上下文运行——可用完整API
 - 应用层可选择LIFO或FIFO投递方式
-- 驱动与QPC/RTOS细节解耦
-- 高优先级线程抢占低优先级AO线程，确保信号在AO
+- 驱动与事件框架 / RTOS细节解耦
+- 高优先级线程抢占低优先级活动对象线程，确保信号在活动对象
   恢复处理之前完成投递
 
 **设计任何新的中断驱动驱动时：**
@@ -183,7 +183,7 @@ ISR → osSemaphoreRelease（极简，ISR安全）
 2. ISR仅释放信号量或设置线程标志
 3. 让应用层注册回调
 4. 让应用层决定信号传递机制（publish、post、post-LIFO）
-5. 驱动不得包含QPC头文件或了解QActive对象
+5. 驱动不得包含事件框架头文件或了解上层活动对象
 
 ## CMSIS-RTOS2 线程/信号量创建规则
 

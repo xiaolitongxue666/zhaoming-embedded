@@ -1,82 +1,86 @@
-# 兆鸣嵌入式
+# 兆鸣嵌入式 · 开源内容仓库
 
-> 三家世界500强，11年一线嵌入式实战。不讲demo，只讲工程化。
+11 年一线嵌入式工程师，公众号「兆鸣嵌入式」。
 
----
+这里是我把工程经验拆成可读、可跑、可改的内容公开出来的地方。第一本书《C 语言面向对象编程·嵌入式实战》已经全部发布。后续会持续分享更多主题。
 
-## 这个仓库是什么
+## 已发布
 
-这是**兆鸣嵌入式**视频教程的配套资源仓库，包含：
+### 《C 语言面向对象编程·嵌入式实战》
 
-- **示例代码** — 每期视频的完整代码，可编译可运行
-- **学习文档** — 核心知识点总结（PDF）
-- **视觉讲义** — 视频中的slides截图（PNG）
-- **工具配置** — Source Insight配置、AI编程Skill等
+[**在线阅读：zhaochengbo.github.io/zhaoming-embedded**](https://zhaochengbo.github.io/zhaoming-embedded/)
 
-所有代码都能在**PC上直接编译运行**（GCC），没有开发板也能学。
+从一颗 LED 写到 Linux 内核 4000 万行代码，讲清楚封装、继承、多态在 C 里怎么落到工业代码。
 
----
+- 20 章正文 + 4 附录 + 序曲 + 前言 + 尾声
+- 每章配套独立可编译的 PC 代码包，全部 0 警告 exit=0
+- 附录 B / C 是完整的 STM32 + Linux 工业级工程（PC mock 跑通）
+- 配套 19 期 B 站视频，搜「兆鸣嵌入式」
 
-## 目录导航
+永久免费在线·MIT License·不出版纸质书。
 
-| 目录 | 内容 | 说明 |
-|------|------|------|
-| [oop-in-c/](oop-in-c/) | **C语言·一个LED讲透面向对象** | 核心系列课程：从struct到Linux内核 |
-| [coding-standards/](coding-standards/) | **嵌入式C语言工程化编码规范** | 7章PDF，覆盖架构/设计模式/Clean Code/内存安全 |
-| [ai-coding-skill/](ai-coding-skill/) | **AI编程工具编码规范Skill** | 导入Claude Code/Cursor，AI自动遵循工程化标准 |
-| [source-insight/](source-insight/) | **Source Insight 4 配置** | 嵌入式工程师看代码神器，附个人配置文件 |
+## 正在写
 
----
+接下来会分主题陆续放出来，每一项都按"在线书 + 配套代码 + 视频"三位一体的方式做：
 
-## 快速开始
+- 嵌入式硬件设计：电源管理、信号完整性
+- PCB 设计与产线工艺
+- 状态机框架在嵌入式系统的工程落地
+- 嵌入式工程师在新时代的成长路径
+- Linux 内核驱动走读
 
-### 1. 克隆仓库
+具体什么时候放出来，关注公众号「兆鸣嵌入式」会先说。
 
-```bash
-git clone https://gitee.com/zhaoming-embedded/zhaoming-embedded.git
+## 仓库结构
+
+```
+zhaoming-embedded/
+├── book/                  在线书源码 (markdown)
+├── oop-in-c/              第一本书每章配套代码包
+├── industrial/            完整工业级工程 (stm32_full / linux_full)
+├── ...                    后续主题独立目录
+└── README.md              本文件
 ```
 
-### 2. 编译运行第一个例子
+## 30 秒跑通第一个例子
+
+国内 Gitee 镜像，速度快：
 
 ```bash
-cd zhaoming-embedded/oop-in-c/code/EP06_封装
-gcc -Wall -Wextra -I../common -o demo main.c led.c ../common/platform_pc.c
+git clone https://gitee.com/zhao-chengbo/zhaoming_embedded.git
+cd zhaoming_embedded/oop-in-c/code/01-three-leds/pc
+make
 ./demo
 ```
 
-### 3. 按顺序学习
+也可以用 GitHub：
 
-EP06 → EP07 → EP08 → EP09 → EP10 → ...
+```bash
+git clone https://github.com/ZhaoChengBo/zhaoming-embedded.git
+```
 
-每期代码都是上一期的**增量改进**，同一个LED驱动一步步进化。
+Windows 装 MinGW，Linux `sudo apt install gcc make`。Windows 不想装环境，双击 `oop-in-c/code/01-three-leds/pc/demo.exe` 也能跑。
 
----
+## 关注作者
 
-## 适合谁
+| 平台 | 信息 |
+|---|---|
+| 公众号 | **兆鸣嵌入式** |
+| 个人微信 | **zmqrs001** |
+| GitHub | [github.com/ZhaoChengBo/zhaoming-embedded](https://github.com/ZhaoChengBo/zhaoming-embedded) |
+| Gitee | [gitee.com/zhao-chengbo/zhaoming_embedded](https://gitee.com/zhao-chengbo/zhaoming_embedded) |
+| 抖音 | 搜「兆鸣嵌入式」 |
+| B 站 | 搜「兆鸣嵌入式」 |
+| 视频号 | 搜「兆鸣嵌入式」 |
 
-- 正在学C语言的**大二/大三学生**
-- 想从"能跑就行"进阶到"工程化"的**初级嵌入式工程师**
-- 面试准备中，想理解**OOP in C / 函数指针 / container_of**的同学
-- 想看看**11年一线经验的工程师是怎么写C代码**的人
+公众号回复「交流」加技术群。
 
----
+<img src="book/assets/zhaoming_qrcode.jpg" alt="兆鸣嵌入式公众号二维码" width="240" />
 
-## 配套视频
+## 反馈与勘误
 
-- **抖音** 搜索「兆鸣嵌入式」
-- **B站** 搜索「兆鸣嵌入式」
-- **视频号** 搜索「兆鸣嵌入式」
-
----
-
-## 获取更多
-
-扫码关注公众号 **「兆鸣嵌入式」**，回复「交流」加技术交流群：
-
-![兆鸣嵌入式公众号](兆鸣嵌入式公众号二维码.jpg)
-
----
+发现错误、有改进建议、想贡献一章，到 [GitHub Issues](https://github.com/ZhaoChengBo/zhaoming-embedded/issues) 或 [Gitee Issues](https://gitee.com/zhao-chengbo/zhaoming_embedded/issues) 提一个，附章节、你的理解、你认为的问题。我会回。
 
 ## 许可证
 
-[MIT License](LICENSE) — 自由使用、修改、分享。
+[MIT](LICENSE)。自由使用、修改、分享、商用。

@@ -18,8 +18,8 @@ description: 嵌入式C语言编码规范，适用于安全关键嵌入式系统
    无副作用、一致的抽象层级
 4. **C语言中的OOP** - 即使在C语言中也要使用面向对象设计模式；
    仅通过统一的外部接口访问设备
-5. **零容忍阻塞** - 如果应用层使用QPC/RTC，整个调用链必须
-   是非阻塞的
+5. **零容忍阻塞** - 如果应用层使用事件驱动框架 / RTC（运行至完成）
+   执行模型，整个调用链必须是非阻塞的
 6. **验证到底层** - 检查硬件交互到寄存器级别；
    永远不要假设API是非阻塞的
 7. **防御性编程** - 断言内部契约、校验外部输入、传播错误、
@@ -138,6 +138,6 @@ description: 嵌入式C语言编码规范，适用于安全关键嵌入式系统
 | [design-patterns.md](references/design-patterns.md) | SOLID原则、C语言GoF模式（状态机、观察者、策略、工厂） |
 | [clean-code.md](references/clean-code.md) | Clean Code + 华为规范：命名、防御性编程、错误处理、const/static |
 | [memory-safety.md](references/memory-safety.md) | 堆分配、线程安全、共享资源、防御性编码 |
-| [hardware-interaction.md](references/hardware-interaction.md) | HAL、寄存器、外设、QPC/RTC |
+| [hardware-interaction.md](references/hardware-interaction.md) | HAL、寄存器、外设、事件驱动框架 / RTC |
 | [code-style.md](references/code-style.md) | 格式、命名、注释、宏、头文件保护 |
 | [safety-checklist.md](references/safety-checklist.md) | **每次编辑后强制执行** - 12阶段安全审查 |
