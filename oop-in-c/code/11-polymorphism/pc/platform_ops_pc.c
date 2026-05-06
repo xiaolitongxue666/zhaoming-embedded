@@ -49,7 +49,7 @@ static bool pc_gpio_read(uint8_t pin)
  *
  * const 修饰让它落 .rodata, 链接期不可改, 防止 g_platform_ops 错
  * 指向之后被无意改写. designated initializer 让没列出的字段自动
- * 填 NULL (本表全部填齐). 见 ch09 § 9.7.1.
+ * 填 NULL (本表全部填齐). 见 ch09 § 9.5.1.
  */
 const struct platform_ops platform_pc = {
 	.name        = "PC",

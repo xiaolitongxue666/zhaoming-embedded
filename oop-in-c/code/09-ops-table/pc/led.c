@@ -110,11 +110,11 @@ static int pwm_toggle(struct led_base *me)
  * const + 全局 -> 编译期 designated initializer 把每个字段填好 ->
  * 链接器把这两个对象放进 .rodata 段 -> 运行时只读, 改写直接 SIGSEGV
  * 或 MCU HardFault. 这一层防御是工业代码的硬要求, 防止运行时被
- * 误改成野指针 (见 ch09 § 9.5).
+ * 误改成野指针 (见 ch09 § 9.5.3 内存代价节).
  *
  * 注意 designated initializer .on = ... 这种写法 (C99): 不依赖字段
  * 顺序, 哪天调换 struct 字段, 这里不用改. 没列出的字段自动填 0/NULL
- * (C99 § 6.7.8 第 21 段). 见 ch09 § 9.7.1.
+ * (C99 § 6.7.8 第 21 段). 见 ch09 § 9.5.1.
  */
 
 const struct led_ops led_ops_gpio = {
@@ -135,7 +135,7 @@ const struct led_ops led_ops_pwm = {
  * 参数从 ch08 的 (me, on, off, toggle) 收成 (me, ops). 函数体内
  * 按名字访问 ops->on / ops->off / ops->toggle, 永远不会传反.
  *
- * 三个函数指针 NULL check 都不能少 (ch09 § 9.7.2): 某种 LED 不支持
+ * 三个函数指针 NULL check 都不能少 (ch09 § 9.5.2): 某种 LED 不支持
  * toggle 时 ops->toggle 可能没填, 调用前必须查. ch14 会展开三种
  * 处理策略 (报错 / 空 stub / 纯虚约定).
  */

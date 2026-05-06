@@ -163,7 +163,7 @@ static int pwm_toggle(struct led_base *me)
  *
  * 100 颗 GPIO LED 共享同一个 12 字节 led_ops_gpio (Flash, 不占 RAM),
  * 每颗 LED 对象里只多 4 字节的 me->ops 指针. 这就是 vtable 的存储
- * 策略: "类一份, 对象只存 vptr". 见 ch09 § 9.7.3 / ch10 § 10.11.
+ * 策略: "类一份, 对象只存 vptr". 见 ch09 § 9.5.3 / ch10 § 10.11.
  *
  * gpio_xxx / pwm_xxx 都声明成 static -- 它们是基类层 dispatch 的
  * 实现细节, 应用层不该直接调. ops 表是它们对外的唯一入口.

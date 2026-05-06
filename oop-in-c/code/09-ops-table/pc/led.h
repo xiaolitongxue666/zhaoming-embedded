@@ -22,7 +22,7 @@
  *
  * 这就是 Linux 内核 struct file_operations / net_device_ops 的骨架.
  * C++ 编译器看到带 virtual 的 class 也是偷偷生成这张表 (vtable),
- * 你这一章手动做一遍. 见 ch09 § 9.6 (C 对比 C++).
+ * 你这一章手动做一遍. 见 ch09 § 9.4 (C 对比 C++).
  *
  * 子类 struct led_gpio / led_pwm 这一章故意保持 ch07/ch08 的字段集
  * (base + 硬件参数), 不在子类里挂 ops 字段. ops 字段什么时候放进
@@ -44,7 +44,7 @@
  * "int (*)(struct led_base *)" 写一次还行, ops 表里写三次就累.
  * Linus 反对 typedef struct (藏类型信息), 但函数指针 typedef 是
  * 他公开支持的例外: 类型字面量太长, 起短名纯收益.
- * 见 ch09 § 9.4.
+ * 见 ch09 § 9.2.
  */
 typedef int (*led_action_fn)(struct led_base *me);
 
@@ -56,7 +56,7 @@ typedef int (*led_action_fn)(struct led_base *me);
  *
  * 按名访问还有一个好处: 加新行为 (set_brightness) 只在 ops 里加
  * 字段, 老的 on/off 调用一字不改 (designated initializer 把
- * 没列出的字段默认填 NULL, 见 ch09 § 9.7.1).
+ * 没列出的字段默认填 NULL, 见 ch09 § 9.5.1).
  */
 struct led_ops {
 	led_action_fn on;
@@ -98,7 +98,7 @@ int test_led(struct led_base *me, const struct led_ops *ops);
  *
  * const + extern 的组合让这两张表落进 .rodata 段:
  *   - MCU 上烧到 Flash, 完全不占 RAM
- *   - 100 颗同类型 LED 共享同一张 12 字节的表 (见 ch09 § 9.5)
+ *   - 100 颗同类型 LED 共享同一张 12 字节的表 (见 ch09 § 9.5.3)
  *   - 链接期不可改, 防止运行时把 .on 字段意外改成野指针
  */
 extern const struct led_ops led_ops_gpio;
