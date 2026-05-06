@@ -185,7 +185,7 @@ led_deinit(&red);
 
 做的是一模一样的事。
 
-C++ 把你手动写的前缀变成了编译器管理的类名（namespace + name mangling）。把你手动写的 `init / deinit` 变成了对象创建 / 销毁时自动调用的构造和析构。
+C++ 把你手动写的前缀变成了编译器管理的类名（namespace 命名空间 + 名字混淆 name mangling，本节末 3.6 / 3.7.4 节会展开）。把你手动写的 `init / deinit` 变成了对象创建 / 销毁时自动调用的构造和析构。
 
 ![C 对比 C++](../assets/ch03/slide4_C对比Cpp.png)
 
@@ -227,7 +227,7 @@ int motor_start(struct motor *me)
 
 如果没这个标志，未初始化的 motor 拿着垃圾 pin 去操作 GPIO，行为完全不可预测。在工业控制板上这是能引发安全停止的 bug。
 
-工业代码里所有公开 API 的对象都有类似的 sentinel 字段：FreeRTOS 的 `TCB.uxBasePriority` 检查、Linux 内核的 `device.driver_data` 检查、Linux 的 `kref` 计数检查，全是同一套防御。
+工业代码里所有公开 API 的对象都有类似的"哨兵字段"（sentinel：用一个字段记录对象状态，让所有公开函数先查这个字段判断对象是否可用）：FreeRTOS 的 `TCB.uxBasePriority` 检查、Linux 内核的 `device.driver_data` 检查、Linux 的 `kref` 计数检查，全是同一套防御。
 
 ### 3.7.2 为什么 C 不能像 C++ 那样自动调用构造函数
 
