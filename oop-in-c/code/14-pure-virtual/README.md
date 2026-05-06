@@ -1,4 +1,4 @@
-# ch14 · 虚函数不实现会怎样 · 纯虚 / 虚 / 接口
+# ch14 · 虚函数不实现 · 三种策略
 
 配套书章节：[`book/04-工程威力/14-纯虚与抽象类.md`](../../../book/04-工程威力/14-纯虚与抽象类.md)
 
@@ -17,3 +17,11 @@ cd pc
 make
 ./demo
 ```
+
+## 目录
+
+- `pc/` 完整可跑工程（PC 模拟 platform，printf 替代 GPIO）
+- `stm32-snippet/platform_stm32.c` 把 platform 4 个函数换到 STM32 HAL，led.c / main.c 一字不改
+- `linux-snippet/platform_linux.c` 把 platform 4 个函数换到 Linux 用户态 sysfs，led.c / main.c 一字不改
+
+本章主线是 led_ops 这一层（子类层）的三种策略，platform 只是稳定背景，所以这里 platform 用函数式包装即可。platform 层从函数式演化成 ops 表是 ch15 的主题。

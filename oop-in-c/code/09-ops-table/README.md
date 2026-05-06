@@ -7,17 +7,16 @@
 引入 `struct led_ops`，把多个函数指针打包成一张表：
 
 ```c
-typedef int (*led_action_fn)(struct led *me);
+typedef int (*led_action_fn)(struct led_base *me);
 
 struct led_ops {
-	led_action_fn          on;
-	led_action_fn          off;
-	led_action_fn          toggle;
-	led_set_brightness_fn  set_brightness;
+	led_action_fn  on;
+	led_action_fn  off;
+	led_action_fn  toggle;
 };
 ```
 
-`test_led` 接受一个 `const struct led_ops *ops`，按名字访问 `ops->on / ops->off`。
+`test_led` 接受一个 `const struct led_ops *ops`，按名字访问 `ops->on / ops->off / ops->toggle`。
 
 ops 表常驻 `.rodata`（`const + extern`），所有同类型 LED 共享一份。
 

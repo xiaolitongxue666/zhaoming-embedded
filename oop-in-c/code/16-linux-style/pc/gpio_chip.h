@@ -5,11 +5,11 @@
  * 把 ch15 的 platform_ops 改个名字、改成"按 chip 分组"的形态，
  * 你就得到了一份和 Linux 内核 GPIO 子系统 90% 相像的接口。
  *
- * 关键差别：ch15 是"全局一份 platform_ops 指针"——整个进程同一时刻
- * 只挂着一家芯片的实现。Linux 内核里同一颗 SoC 上可能并存多家厂商
- * 的 GPIO 控制器（片内 + 外扩 IO 扩展芯片），所以 gpio_chip 把每一份
- * 实现绑在一个 chip 实例上，desc->chip 反查 dispatch。这就是 ch16
- * "再加一层抽象隔离芯片"的真实形态。
+ * 关键差别：之前的 platform 抽象是"全局一份 platform_ops 指针"，
+ * 整个进程同一时刻只挂着一家芯片的实现。Linux 内核里同一颗 SoC 上
+ * 可能并存多家厂商的 GPIO 控制器（片内 + 外扩 IO 扩展芯片），所以
+ * gpio_chip 把每一份实现绑在一个 chip 实例上，desc->chip 反查 dispatch。
+ * 这就是"再加一层抽象隔离芯片"的真实形态。
  *
  * 真实内核版定义在 include/linux/gpio/driver.h 第 415 行起，
  * 字段比这里多得多（中断、热插拔、debugfs 等），但骨架就是这样。

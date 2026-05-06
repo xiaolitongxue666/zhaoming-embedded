@@ -1,13 +1,20 @@
 /* SPDX-License-Identifier: MIT */
 /*
- * led_stm32.c - led_base 加 ops 字段后, STM32 上的样子
+ * led_stm32.c - ch13 STM32 等效片段（函数式包装版）
  *
- * led_base 多了一个 ops 字段, sizeof(led_base) 在 32 位 ARM 上从
- * 一字节(只有 pin) 涨到 8 字节(对齐 4 后: ops 4 + pin 1 + padding 3).
- * 100 颗 LED 多 700 字节 RAM, 换来"调用方不用再传 ops 表".
+ * 父类 led_on / led_off / led_set_brightness 写在 led.c, 子类实现里
+ * 第一行用 container_of 反推自己, 后面调 platform_gpio_xxx 封装函数.
+ * STM32 上这一层落到 HAL_GPIO_xxx, 应用层 / 父类 / 子类一字不改.
  *
- * led_base.h / led.h / led.c / main.c 一字不改 -- 这一章的演化只
- * 发生在 base 字段集和 init 流程里, 跟硬件操作层无关.
+ * 跟 pc/ 唯一的差别就在这个文件: 把 printf 模拟换成真实 HAL 操作.
+ *
+ * container_of 这一招在 STM32 上编译产物就是 ARM Cortex-M 的
+ * SUB Rd, Rn, #imm 一条指令, 零运行时开销.
+ *
+ * 注: 这里是 ch01-ch10 沿用的函数式包装教学简化版. ch15 (Platform 层)
+ * 会重构成 ops 表 (虚函数表) 形式, 和工业代码对齐.
+ *
+ * 见 ch13 § 13.9 在 STM32 上长什么样.
  */
 
 #include "led.h"

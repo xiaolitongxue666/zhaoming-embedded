@@ -4,12 +4,11 @@
  * @brief LED 基类 + 三种子类 - 向上转型工程化高潮
  *
  * @details
- * 本章 (ch12 § 12.0) 把 ch10/ch11 演化好的多态机制放进真实工程结构:
+ * 本章 (ch12) 把前面演化好的 ops 表机制放进真实工程结构:
  *   - 父类 struct led_base: 所有 LED 共有字段 (ops + name + is_on)
- *     字段集从 ch10 起就定型了, ch12 ~ ch18 不变 (见 ch11 § 11.12)
  *   - 子类 struct led_gpio / led_pwm / led_i2c: 三种硬件实现,
  *     base 嵌在第一个字段, 后面追加各自的硬件资源 (pin / channel /
- *     bus + addr). 这是父类放共性、硬件字段下沉到子类的标准形态.
+ *     bus + addr). 父类放共性、硬件字段下沉到子类.
  *
  * 关键 ABI 不变量 (见 ch12 § 12.2, C99 § 6.7.2.1):
  *   "结构体第一个成员的地址等于结构体本身的地址."
@@ -18,8 +17,8 @@
  * 合法 (类型对齐) 又零开销 (偏移 0, 不生成加法指令). 这是整章
  * 所有威力的根基.
  *
- * 应用层入口只有三个函数: led_on / led_off / led_set_brightness,
- * 全部接 struct led_base * 句柄. 应用层一行硬件字样都没有.
+ * 应用层入口只有两个函数: led_on / led_off, 都接 struct led_base *
+ * 句柄. 应用层一行硬件字样都没有.
  */
 
 #ifndef LED_H
@@ -31,29 +30,21 @@
 struct led_base;
 
 /*
- * struct led_ops - 操作表 (vtable). 见 ch09 § 9.3 / ch10 § 10.3.
- *
- * set_brightness 是这一章新加的能力. GPIO LED 不支持调光, 这一字段
- * 故意留 NULL; PWM LED 实现这个字段; I2C LED 也不实现. led.c 的
- * led_set_brightness 包装函数遇到 NULL 时安静返回, 不报错 (ch14
- * 会展开三种处理策略).
+ * struct led_ops - 操作表 (ops 表). 子类把自己的实现填进去,
+ * 父类统一接口 led_on / led_off 通过 ops 表分发到子类.
  */
 struct led_ops {
 	int (*on)(struct led_base *me);
 	int (*off)(struct led_base *me);
-	int (*set_brightness)(struct led_base *me, uint8_t brightness);
 };
 
 /*
- * struct led_base - 父类定型版.
+ * struct led_base - 父类.
  *
- * 字段集从 ch10 vptr 落地起一字不变, ch11 ~ ch18 全沿用. 三个字段:
- *   ops    : vptr - 必须放第一个 (向上转型零开销 + 单条 LDR 取 vptr)
+ * 三个字段:
+ *   ops    : 子类的操作表入口, 必须放第一个 (向上转型零开销)
  *   name   : 给日志打印, 也是子类的"我是谁"标识
  *   is_on  : 当前开关状态
- *
- * 工业代码版还会多一个 flags 字段 (事件状态位、错误掩码), 教学版
- * 保持精简. 见 ch11 § 11.12.
  */
 struct led_base {
 	const struct led_ops *ops;
@@ -61,10 +52,9 @@ struct led_base {
 	bool                  is_on;
 };
 
-/* 应用层入口：所有调用都走 led_base 句柄 */
+/* 应用层入口: 所有调用都走 led_base 句柄 */
 int led_on(struct led_base *me);
 int led_off(struct led_base *me);
-int led_set_brightness(struct led_base *me, uint8_t brightness);
 
 /*
  * ------- 子类一: GPIO LED -------
@@ -88,8 +78,7 @@ void led_gpio_init(struct led_gpio *me, const char *name,
 /*
  * ------- 子类二: PWM LED -------
  *
- * 通过 PWM 占空比调亮度. 硬件资源: 一路 PWM 通道 + 当前占空比.
- * 这种 LED 支持 set_brightness, ops 表里这一字段填 pwm_set_brightness.
+ * 通过 PWM 占空比驱动. 硬件资源: 一路 PWM 通道 + 当前占空比.
  */
 struct led_pwm {
 	struct led_base base;       /* 父类, 第 0 字段 */

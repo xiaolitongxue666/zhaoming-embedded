@@ -1,18 +1,19 @@
-# ch15 · 换硬件不改应用 · Platform 抽象到底
+# ch15 · 换硬件不改应用 · OOP 完整框架
 
 配套书章节：[`book/04-工程威力/15-Platform抽象.md`](../../../book/04-工程威力/15-Platform抽象.md)
 
 ## 看点
 
-ch15 是 platform 层 ops 化的高潮。`pc/` 里同时编译进 3 个 `struct platform_ops` 实例：
+ch15 把整本书 ch01 - ch14 学过的所有 OOP 武器组装成一份完整 LED 框架，**0 个新概念**。四层架构：
 
-- `platform_pc`（PC 模拟）
-- `platform_stm32_mock`（STM32 假装版，PC 上为了演示用 printf 模拟 BSRR 写入）
-- `platform_linux_mock`（Linux 假装版，PC 上用 printf 模拟 sysfs 写入）
+- **父类层** `led.h` / `led.c`：`led_base` + `led_ops` + 必填 / 选填
+- **子类层** `led.c`：`led_gpio` / `led_pwm` / `led_i2c`，每个子类第一行 `container_of` 反推
+- **板级层** `leds.h` / `board_init.c`：三种子类混搭，向上转型挂全局句柄
+- **应用层** `app.h` / `app.c`：`alarm_blink` / `status_indicate` / `power_on_test` 三个业务函数
 
-`main.c` 跑三轮，运行时通过 `platform_select(...)` 切换 platform。同一份业务代码、同一份 led 驱动、同一份 board_init，三种 platform 下走到不同 GPIO 实现，应用层 0 改动。
+主线：grep `app.c` 拿不到任何硬件字样（`LedGpio` / `LedPwm` / `LedI2c` / `gpio_write` 全部 0 命中）。换硬件方案改 `board_init.c` 三行，`app.c` 0 改动。
 
-真实 STM32 / Linux 工程的 platform_ops 实现在 `stm32-snippet/` 和 `linux-snippet/`。
+`pc/` 目录共 8 个文件，编译跑出 PC 模拟输出。STM32 / Linux 真机版只换底下 4 个 platform 封装函数（同样的签名），上面四层一字不动，对应 `stm32-snippet/` 和 `linux-snippet/`。
 
 ## 跑
 
@@ -22,4 +23,20 @@ make
 ./demo
 ```
 
-输出会看到 PC / STM32 / LINUX 三段，应用层代码完全相同。
+输出会看到：开机自检 → 报警闪烁 → 状态指示。三盏灯（GPIO+PWM+I2C 混搭）经过同一份 `led_on / led_off` 父类接口，分发到不同子类，落到 `platform_gpio_write` 等封装函数。
+
+## 文件清单
+
+```
+pc/
+├── main.c            主程序入口（单轮跑）
+├── app.h, app.c      应用层 - 三个业务函数
+├── leds.h            板级对外暴露的 g_led_xxx 句柄声明
+├── board_init.c      板级 - 唯一认识硬件的文件
+├── led.h, led.c      父类 + 三个子类
+├── container_of.h    与 ch13 同款（最小可用版）
+└── Makefile          链接 ../../common/platform_pc.c
+
+stm32-snippet/led_stm32.c    真实 STM32 HAL 版的 4 个 platform 函数
+linux-snippet/led_linux.c    真实 Linux 用户态 sysfs 版的 4 个 platform 函数
+```

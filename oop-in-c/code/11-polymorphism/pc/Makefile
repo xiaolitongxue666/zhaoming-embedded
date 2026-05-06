@@ -1,11 +1,10 @@
-# Makefile - ch11 多态完整图景
+# Makefile - ch11 多态: led_on / led_off / led_toggle 父类统一接口
 
 CC      = gcc
 CFLAGS  = -Wall -Wextra -std=c99 -I../../common
 TARGET  = demo
 
-SRCS    = main.c led.c led_base.c \
-          platform_dispatch.c platform_ops_pc.c
+SRCS    = main.c led.c led_base.c ../../common/platform_pc.c
 
 .PHONY: all clean run
 

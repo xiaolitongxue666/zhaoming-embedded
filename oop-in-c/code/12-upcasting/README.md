@@ -10,16 +10,16 @@ pc/                  完整可跑 PC 模拟版
 ├── leds.h                 板级对外暴露的全局句柄
 ├── board_init.c           唯一认识硬件的文件
 ├── main.c                 应用层（零硬件字样）
-├── platform_ops.h         本章自带 platform_ops 接口
-├── platform_ops_pc.c      PC 模拟实现
-└── Makefile
+└── Makefile               引用 ../../common/platform_pc.c
 
-stm32-snippet/       STM32 HAL 等效片段（替换 platform_ops_pc.c 即可）
-└── platform_ops_stm32.c
+stm32-snippet/       STM32 HAL 等效片段（替换 platform_pc.c 即可）
+└── led_stm32.c
 
 linux-snippet/       Linux 用户态等效片段（sysfs）
-└── platform_ops_linux.c
+└── led_linux.c
 ```
+
+PC 版的 GPIO 模拟实现来自仓库共享的 `oop-in-c/code/common/platform_pc.c`，跟 ch01 起一字不变。
 
 ## 跑一遍
 

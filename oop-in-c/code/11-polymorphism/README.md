@@ -1,41 +1,42 @@
-# 11-polymorphism — 多态完整图景
+# 11-polymorphism — 父类统一接口 led_on / led_off / led_toggle
 
 第 11 章 [同名函数不同行为](../../../book/03-多态/11-多态完整图景.md) 的配套代码。
 
 ## 演化点
 
-两件事汇合到一起：
-
-### 1. led 多态完整版
-
-`me->ops->on(me)` 真正 dispatch。`led_on(struct led_base *me)` 单一接口走完所有子类。
+把 ch10 应用层那行 `me->ops->on(me)` 包装成 `led_on(base)`，写在父类 `led_base.c` 里，所有子类共用。应用层只调 `led_on / led_off / led_toggle`，看不到 ops 字段，也不需要知道这颗 LED 是 GPIO 还是 PWM。
 
 ```c
-struct led_base *all_leds[3] = { &red.base, &blue.base, &green.base };
+/* 父类统一接口 - 写在 led_base.c, 函数体一行 */
+int led_on(struct led_base *me) { return me->ops->on(me); }
+
+/* 应用层: 三颗 LED 装进 base 指针数组, 一行 led_on(base) 跑出三种行为 */
+struct led_base *all_leds[] = { &red.base, &blue.base, &green.base };
 for (int i = 0; i < 3; ++i)
-	led_on(all_leds[i]);     /* 同一行代码, 不同的实现 */
+	led_on(all_leds[i]);
 ```
 
-### 2. platform 层从函数式重构成 ops 表式
+红灯落到 `gpio_on`，蓝灯落到 `pwm_on`，绿灯落到 `gpio_on`。同名函数不同行为，这就是多态。
 
-ch01-ch10 的 `platform_gpio_*(...)` 是函数式包装，编译期决定平台。
+## 文件清单
 
-ch11 演化：
+```
+pc/
+├── Makefile
+├── led_base.h        - 父类字段集 (ops / name / is_on)
+├── led_base.c        - 父类共有 init + 父类统一接口 led_on/off/toggle
+├── led.h             - 子类声明 + ops 表声明
+├── led.c             - 子类 init + 子类实现 (gpio_on / pwm_on / ...)
+└── main.c            - base 指针数组循环演示
 
-```c
-struct platform_ops {
-	void (*gpio_init)(uint8_t pin, uint8_t mode);
-	void (*gpio_deinit)(uint8_t pin);
-	void (*gpio_write)(uint8_t pin, bool value);
-	bool (*gpio_read)(uint8_t pin);
-};
+stm32-snippet/
+└── led_stm32.c       - 真实 STM32 上的 platform_gpio_* 实现 (HAL)
 
-extern const struct platform_ops *platform;
+linux-snippet/
+└── led_linux.c       - 真实 Linux 用户态 platform_gpio_* 实现 (sysfs)
 ```
 
-调用方式从 `platform_gpio_write(pin, val)` 变成 `platform->gpio_write(pin, val)`。启动时 `platform_select_pc() / platform_select_stm32()` 切换平台。
-
-注意：本章的 `platform_ops.h` 在 `oop-in-c/code/11-polymorphism/pc/` 内部，**不动** `oop-in-c/code/common/platform.h`（那个给 ch01-ch10 共用的函数式形态保留）。第 15 章 platform 层 ops 化的高潮章会沿用这套接口。
+`stm32-snippet/` 和 `linux-snippet/` 是参考片段不参与 PC build。共享的 `oop-in-c/code/common/platform.h` + `platform_pc.c` 提供 PC 模拟版的 GPIO 操作。
 
 ## 编译运行
 

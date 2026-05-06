@@ -10,6 +10,7 @@
  */
 
 #include "led.h"
+#include "container_of.h"
 #include <stdio.h>
 
 /* 一个完整的 sensor 子类：温度传感器 */
@@ -20,7 +21,7 @@ struct temp_sensor {
 
 static int temp_read(struct sensor *me, int32_t *out)
 {
-	struct temp_sensor *self = (struct temp_sensor *)me;
+	struct temp_sensor *self = container_of(me, struct temp_sensor, base);
 	self->last_value = 25;
 	*out = self->last_value;
 	printf("  [%s] read = %d C\n", me->name, *out);

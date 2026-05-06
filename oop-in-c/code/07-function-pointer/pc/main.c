@@ -48,7 +48,7 @@ static void i2c_on(int addr)
 
 static void i2c_off(int addr)
 {
-	printf("  [I2C] addr 0x%02X OFF (cmd 0x00)\n", addr);
+	printf("  [I2C] addr 0x%02X OFF\n", addr);
 }
 
 /* ---- 主流程: 一个 fp, 三种号码, 三种行为 ---- */

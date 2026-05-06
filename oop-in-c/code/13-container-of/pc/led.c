@@ -5,12 +5,12 @@
  * 和 ch12 的差别只有一处：(struct led_xxx *)me 强转换成
  *   container_of(me, struct led_xxx, base);
  *
- * GPIO 子类的 base 故意不在第一个位置，container_of 照样对——这是
+ * GPIO 子类的 base 故意不在第一个位置，container_of 照样对。这是
  * 整个 ch13 想证明的核心。强转那一招要求 base 必须在 offset 0，
  * container_of 没有这条限制：它在编译期算出 base 的真实偏移、运行时
  * 一条减法指令就还原回外层 struct 起点。
  *
- * 见 ch13 § 13.5 / § 13.6。
+ * 见 ch13 § 13.6 在 gpio_on 里用一下 / § 13.8.2 位置无关 demo。
  */
 
 #include "led.h"

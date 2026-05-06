@@ -1,4 +1,4 @@
-# Makefile - ch10 ops 放进对象 (vptr 落地)
+# Makefile - ch10 ops 放进对象
 
 CC      = gcc
 CFLAGS  = -Wall -Wextra -std=c99 -I../../common

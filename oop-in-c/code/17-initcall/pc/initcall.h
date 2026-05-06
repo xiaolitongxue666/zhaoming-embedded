@@ -67,7 +67,7 @@ typedef int (*initcall_t)(void);
  * __stop_my_initcall) 即可拿到所有用 MODULE_INIT 注册的函数指针。
  *
  * GCC + 现代链接器（GNU ld、LLD）在 ELF / PE 平台上会为合法 C 标识符
- * 段名（不以点开头）自动生成 __start_<sec> / __stop_<sec> 符号——
+ * 段名（不以点开头）自动生成 __start_<sec> / __stop_<sec> 符号。
  * 这就是为什么这里段名用 "my_initcall" 而不是 ".my_initcall"，
  * 让编译工具链帮我们把边界符号自动生成出来，省掉手写链接脚本。
  *

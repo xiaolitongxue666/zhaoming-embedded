@@ -1,16 +1,18 @@
 /* SPDX-License-Identifier: MIT */
 /**
  * @file  led_linux.c
- * @brief ops 表在 Linux 用户态的平台胶水
+ * @brief 父类统一接口 led_on 落到 Linux 用户态 sysfs 的样子
  *
  * @details
- * 实现 platform.h 里的 platform_gpio_xxx 封装函数, 走 sysfs.
- * led_base.h / led.h / led.c / main.c 一字不改.
+ * 父类 led_on / led_off 写在 led.c, 子类实现走 platform_gpio_xxx
+ * 封装函数. Linux 用户态这一层落到 /sys/class/gpio/ 文件读写,
+ * 应用层 / 父类 / 子类 / board_init.c 一字不改.
  *
- * gcc / clang 把 const struct led_ops 放进 .rodata, 进程加载时
- * 在虚拟内存里只读映射, 全进程共享 (单实例).
+ * 跟 pc/ 唯一的差别就在这个文件: 把 printf 模拟换成真实 sysfs 操作.
+ *
+ * PWM 子类在真实 Linux 上走 /sys/class/pwm/, I2C 子类走 /dev/i2c-N
+ * + ioctl. 这两路不在本片段里, 完整工程在附录 C.
  */
-
 #include "led.h"
 #include <fcntl.h>
 #include <unistd.h>

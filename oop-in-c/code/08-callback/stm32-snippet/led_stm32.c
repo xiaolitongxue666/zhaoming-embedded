@@ -1,46 +1,56 @@
 /* SPDX-License-Identifier: MIT */
 /*
- * led_stm32.c - 函数指针当参数 + 回调注册 在 STM32 上的样子
+ * led_stm32.c - 函数指针当参数 在 STM32 上的样子
  *
- * 平台胶水还是 ch01 那套. 函数指针参数 + 回调字段都不影响平台层.
+ * 三种 on/off 实现走真实硬件: GPIO 拉电平 / PWM 改占空比 / I2C 发命令.
+ * 三个函数签名都是 void name(int param), 这样同一个 test_led 用同一对
+ * 函数指针参数 void (*)(int) 能匹配任何一组实现.
  *
- * 一个真实场景: 主控板每次开关一颗 LED 都要把状态上报到 CAN 总线.
- *   void can_log(struct led *me, bool new_state) {
- *       can_send(0x100 + me->base.pin, new_state ? 1 : 0);
- *   }
- *   led_register_state_cb(&red_led, can_log);
- * 之后 led_on/off 自动把状态发到 CAN, led 模块本身不知道 CAN 存在.
+ * 第三个参数在不同实现里有不同含义: GPIO 是引脚号, PWM 是通道号, I2C
+ * 是从机地址. 由调用方负责传匹配的 id.
+ *
+ * 真实工程里 PWM 通道、I2C 句柄通常通过文件级 static 全局拿到 (CubeMX
+ * 生成代码就是这套), 这里片段保留这个风格.
  */
 
 #include "led.h"
 #include "stm32f4xx_hal.h"
 
-void platform_gpio_init(uint8_t pin, uint8_t mode)
+extern TIM_HandleTypeDef htim3;     /* CubeMX 生成: 控 LED 的 PWM 定时器 */
+extern I2C_HandleTypeDef hi2c1;     /* CubeMX 生成: 控 LED 的 I2C 总线 */
+
+void gpio_on(int pin)
 {
-	GPIO_InitTypeDef cfg = {0};
-
-	__HAL_RCC_GPIOA_CLK_ENABLE();
-
-	cfg.Pin   = (uint16_t)(1U << pin);
-	cfg.Mode  = (mode == GPIO_MODE_OUTPUT) ?
-	            GPIO_MODE_OUTPUT_PP : GPIO_MODE_INPUT;
-	cfg.Pull  = GPIO_NOPULL;
-	cfg.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(GPIOA, &cfg);
+	HAL_GPIO_WritePin(GPIOA, (uint16_t)(1U << pin), GPIO_PIN_SET);
 }
 
-void platform_gpio_deinit(uint8_t pin)
+void gpio_off(int pin)
 {
-	HAL_GPIO_DeInit(GPIOA, (uint16_t)(1U << pin));
+	HAL_GPIO_WritePin(GPIOA, (uint16_t)(1U << pin), GPIO_PIN_RESET);
 }
 
-void platform_gpio_write(uint8_t pin, bool value)
+void pwm_on(int channel)
 {
-	HAL_GPIO_WritePin(GPIOA, (uint16_t)(1U << pin),
-	                  value ? GPIO_PIN_SET : GPIO_PIN_RESET);
+	__HAL_TIM_SET_COMPARE(&htim3, (uint32_t)channel, 1000);   /* 占空比 100% */
+	HAL_TIM_PWM_Start(&htim3, (uint32_t)channel);
 }
 
-bool platform_gpio_read(uint8_t pin)
+void pwm_off(int channel)
 {
-	return HAL_GPIO_ReadPin(GPIOA, (uint16_t)(1U << pin)) == GPIO_PIN_SET;
+	__HAL_TIM_SET_COMPARE(&htim3, (uint32_t)channel, 0);
+	HAL_TIM_PWM_Stop(&htim3, (uint32_t)channel);
+}
+
+void i2c_on(int addr)
+{
+	uint8_t cmd[1] = { 0x01 };       /* 厂家协议: 0x01 = ON */
+	HAL_I2C_Master_Transmit(&hi2c1, (uint16_t)(addr << 1),
+	                        cmd, sizeof(cmd), 100);
+}
+
+void i2c_off(int addr)
+{
+	uint8_t cmd[1] = { 0x00 };       /* 厂家协议: 0x00 = OFF */
+	HAL_I2C_Master_Transmit(&hi2c1, (uint16_t)(addr << 1),
+	                        cmd, sizeof(cmd), 100);
 }

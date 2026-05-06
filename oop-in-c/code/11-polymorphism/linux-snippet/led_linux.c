@@ -1,25 +1,22 @@
 /* SPDX-License-Identifier: MIT */
-/*
- * platform_ops_linux.c - 真实 Linux 用户态 platform_ops 实例 (sysfs)
+/**
+ * @file  led_linux.c
+ * @brief 父类统一接口 led_on 落到 Linux 用户态 sysfs 的样子
  *
- * 这一份只导出 const struct platform_ops platform_linux. 启动期 main
- * 调 platform_select(&platform_linux) 把 platform 层内部当前指针指向它.
- * 之后驱动层调 platform_gpio_xxx 封装函数, platform 层内部 dispatch 到
- * 这一份的具体实现.
+ * @details
+ * 父类 led_on / led_off / led_toggle 写在 led_base.c, 子类实现走
+ * platform_gpio_xxx 封装函数. Linux 用户态这一层落到 /sys/class/gpio/
+ * 文件读写, 应用层 / 父类 / 子类一字不改.
  *
- * 跟 pc/platform_ops_pc.c 形态一致, 只是底下从 printf 换成
- * /sys/class/gpio/ 文件操作. 应用层 / led 层一字不改.
+ * 跟 pc/ 唯一的差别就在这个文件: 把 printf 模拟换成真实 sysfs 操作.
  */
-
-#include "platform_ops.h"
+#include "led.h"
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 
-#define LINUX_GPIO_MODE_OUTPUT    0
-
-static void linux_gpio_init(uint8_t pin, uint8_t mode)
+void platform_gpio_init(uint8_t pin, uint8_t mode)
 {
 	char path[64];
 	int fd;
@@ -32,13 +29,13 @@ static void linux_gpio_init(uint8_t pin, uint8_t mode)
 	         "/sys/class/gpio/gpio%u/direction", (unsigned)pin);
 	fd = open(path, O_WRONLY);
 	if (fd >= 0) {
-		const char *dir = (mode == LINUX_GPIO_MODE_OUTPUT) ? "out" : "in";
+		const char *dir = (mode == GPIO_MODE_OUTPUT) ? "out" : "in";
 		write(fd, dir, strlen(dir));
 		close(fd);
 	}
 }
 
-static void linux_gpio_deinit(uint8_t pin)
+void platform_gpio_deinit(uint8_t pin)
 {
 	int fd = open("/sys/class/gpio/unexport", O_WRONLY);
 	if (fd >= 0) {
@@ -47,7 +44,7 @@ static void linux_gpio_deinit(uint8_t pin)
 	}
 }
 
-static void linux_gpio_write(uint8_t pin, bool value)
+void platform_gpio_write(uint8_t pin, bool value)
 {
 	char path[64];
 	int fd;
@@ -60,7 +57,7 @@ static void linux_gpio_write(uint8_t pin, bool value)
 	}
 }
 
-static bool linux_gpio_read(uint8_t pin)
+bool platform_gpio_read(uint8_t pin)
 {
 	char path[64], buf[2] = { 0 };
 	int fd;
@@ -73,11 +70,3 @@ static bool linux_gpio_read(uint8_t pin)
 	close(fd);
 	return buf[0] == '1';
 }
-
-const struct platform_ops platform_linux = {
-	.name        = "LINUX",
-	.gpio_init   = linux_gpio_init,
-	.gpio_deinit = linux_gpio_deinit,
-	.gpio_write  = linux_gpio_write,
-	.gpio_read   = linux_gpio_read,
-};

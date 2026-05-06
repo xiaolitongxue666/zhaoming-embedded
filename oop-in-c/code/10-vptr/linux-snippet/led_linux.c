@@ -1,12 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 /**
  * @file  led_linux.c
- * @brief vptr 落地后, Linux 用户态的平台胶水
+ * @brief led_base 加 ops 字段后, Linux 用户态的平台胶水
  *
  * @details
  * sysfs gpio 实现 platform.h 接口. led_base.h / led.h / led.c / main.c
- * 一字不改 -- ch10 的 vptr 演化只发生在 base 字段集, 跟 platform 层
- * 无关. ch11 起 platform 层才内部演化成 ops 表.
+ * 一字不改 -- 这一章的演化只发生在 base 字段集和 init 流程里, 跟硬件
+ * 操作层无关.
  */
 #include "led.h"
 #include <fcntl.h>

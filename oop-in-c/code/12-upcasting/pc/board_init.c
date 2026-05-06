@@ -1,4 +1,4 @@
-﻿/* SPDX-License-Identifier: MIT */
+/* SPDX-License-Identifier: MIT */
 /**
  * @file  board_init.c
  * @brief 整个工程里唯一认识硬件的文件 - 板级初始化 (BSP 核心)
@@ -19,7 +19,7 @@
  * init 调用、句柄绑定), main.c 一字不动. 见 ch12 § 12.6.
  *
  * board_init() 在 main 里开机调一次. 真实工程会有更长的初始化
- * 链 (时钟、中断向量、RTOS, 等等), ch17 链接自动初始化会展开.
+ * 链 (时钟、中断向量、RTOS, 等等).
  */
 
 #include "leds.h"
@@ -54,8 +54,7 @@ void board_init(void)
 {
 	/*
 	 * 各自走自己的子类构造函数, 把硬件资源传进去.
-	 * 子类 init 内部会调 led_base_init(&me->base, name, ops_xxx),
-	 * 把对应的 ops 表挂到 base 字段 (这是 ch10 vptr 落地的工作).
+	 * 子类 init 内部把对应的 ops 表挂到 base 字段.
 	 *
 	 * 三种 LED 三种硬件:
 	 *   GPIO 灯 (ERR)   -> pin = 10, on_level = high
@@ -75,17 +74,13 @@ void board_init(void)
 	 *   结构体本身的地址". 因为 base 是子类的第一个字段,
 	 *       &s_led_err == &s_led_err.base    (作为指针值)
 	 *   两个指针类型不同, 但指向同一个字节. 编译器替我们算偏移
-	 *   (本例偏移是 0, 一条 ADD r0, #0 优化掉, 零开销).
+	 *   (本例偏移是 0, 一条加法指令都不会生成, 零开销).
 	 *
 	 * 为什么写 &s_led_err.base 而不是 (struct led_base *)&s_led_err
 	 * (见 ch12 § 12.8.1):
 	 *   .base 字段访问让编译器自己算偏移, base 不管在第几个位置都对.
 	 *   强转写法假定"base 永远在第一个", 哪天某个倒霉的同事把 base
 	 *   挪到第二个字段, 强转代码立刻崩, 字段访问代码自动适应.
-	 *
-	 * 应用层调 led_on(g_led_error) 时, 第一个参数 r0 = g_led_error =
-	 * &s_led_err.base = &s_led_err, led_on 内部 me->ops 就是
-	 * [r0+0] = s_led_err.base.ops, 没有偏移错位. 见 ch12 § 12.8.7.
 	 */
 	g_led_error   = &s_led_err.base;
 	g_led_status  = &s_led_status.base;

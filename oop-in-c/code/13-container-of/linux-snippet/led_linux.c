@@ -1,16 +1,21 @@
 /* SPDX-License-Identifier: MIT */
 /**
  * @file  led_linux.c
- * @brief ops 表在 Linux 用户态的平台胶水
+ * @brief ch13 Linux 用户态 sysfs 等效片段（函数式包装版）
  *
  * @details
- * 实现 platform.h 里的 platform_gpio_xxx 封装函数, 走 sysfs.
- * led_base.h / led.h / led.c / main.c 一字不改.
+ * 父类 led_on / led_off / led_set_brightness 写在 led.c, 子类实现里
+ * 第一行用 container_of 反推自己, 后面调 platform_gpio_xxx 封装函数.
+ * Linux 用户态这一层落到 /sys/class/gpio/ 文件读写, 应用层 / 父类 /
+ * 子类一字不改.
  *
- * gcc / clang 把 const struct led_ops 放进 .rodata, 进程加载时
- * 在虚拟内存里只读映射, 全进程共享 (单实例).
+ * 跟 pc/ 唯一的差别就在这个文件: 把 printf 模拟换成真实 sysfs 操作.
+ *
+ * 注: 这里是 ch01-ch10 沿用的函数式包装教学简化版. ch15 (Platform 层)
+ * 会重构成 ops 表 (虚函数表) 形式, 和工业代码对齐.
+ *
+ * 见 ch13 § 13.10 在 Linux 用户态长什么样.
  */
-
 #include "led.h"
 #include <fcntl.h>
 #include <unistd.h>

@@ -1,16 +1,17 @@
 /* SPDX-License-Identifier: MIT */
 /*
- * led_stm32.c - led_base 加 ops 字段后, STM32 上的样子
+ * led_stm32.c - 父类 / 子类 / 板级 / 应用 四层落到 STM32 上的样子
  *
- * led_base 多了一个 ops 字段, sizeof(led_base) 在 32 位 ARM 上从
- * 一字节(只有 pin) 涨到 8 字节(对齐 4 后: ops 4 + pin 1 + padding 3).
- * 100 颗 LED 多 700 字节 RAM, 换来"调用方不用再传 ops 表".
+ * ch15 完整框架在真实 STM32 工程里只换一份文件: 把 PC 模拟版的 4 个
+ * platform 封装函数 (printf 模拟) 换成走 STM32 HAL 的真实实现. 父类
+ * led.c / 子类 ops / 板级 board_init.c / 应用 app.c 一字不动.
  *
- * led_base.h / led.h / led.c / main.c 一字不改 -- 这一章的演化只
- * 发生在 base 字段集和 init 流程里, 跟硬件操作层无关.
+ * gpio_on 子类实现里的 platform_gpio_write(self->pin, self->on_level),
+ * 在 STM32 上调到底就是 HAL_GPIO_WritePin -> GPIOx->BSRR 一次 32 位
+ * store (原子). 见 ch15 § 15.10 在 STM32 上长什么样.
  */
 
-#include "led.h"
+#include "platform.h"
 #include "stm32f4xx_hal.h"
 
 void platform_gpio_init(uint8_t pin, uint8_t mode)

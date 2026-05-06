@@ -14,7 +14,7 @@
  * 行）。本文件保留同样的三步语义、去掉 GCC 专属的类型检查
  * （__same_type / static_assert），便于 PC 上用任何 C99 编译器跑通。
  *
- * 见 ch13 § 13.4 把它串起来 + § 13.7 这个东西叫什么。
+ * 见 ch13 § 13.5 三步宏 container_of + § 13.7 这个东西叫什么。
  */
 
 #ifndef MY_CONTAINER_OF_H
@@ -34,10 +34,8 @@
  *   2. 减去 member 在 type 里的偏移（offsetof 编译期常量）
  *   3. 把结果转回 type *
  *
- * 注意：ptr 表达式不要带副作用（像 get_next() 这种调用）。这个最小版
- * 把 (ptr) 在宏里展开两次（char 转换一次、offsetof 类型推导那次不用），
- * 副作用会被多次执行。Linux 内核版用 statement expression + __mptr 局部
- * 变量先抓一次，避免重求值，本最小版没做。详见 ch13 § 13.8.3。
+ * 注意：ptr 表达式不要带副作用。内核版用 statement expression 解决，
+ * 本最小版没做。详见书 § 13.8.5 Linux 内核版宏剖析。
  */
 #define container_of(ptr, type, member)					\
 	((type *)((char *)(ptr) - offsetof(type, member)))

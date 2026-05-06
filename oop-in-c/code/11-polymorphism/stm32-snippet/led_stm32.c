@@ -1,13 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 /*
- * led_stm32.c - led_base 加 ops 字段后, STM32 上的样子
+ * led_stm32.c - 父类统一接口 led_on 落到 STM32 上的样子
  *
- * led_base 多了一个 ops 字段, sizeof(led_base) 在 32 位 ARM 上从
- * 一字节(只有 pin) 涨到 8 字节(对齐 4 后: ops 4 + pin 1 + padding 3).
- * 100 颗 LED 多 700 字节 RAM, 换来"调用方不用再传 ops 表".
+ * 父类 led_on / led_off / led_toggle 写在 led_base.c, 子类实现
+ * (gpio_on / pwm_on / ...) 走 platform_gpio_xxx 封装函数. STM32
+ * 上这一层落到 HAL_GPIO_xxx, 应用层 / 父类 / 子类一字不改.
  *
- * led_base.h / led.h / led.c / main.c 一字不改 -- 这一章的演化只
- * 发生在 base 字段集和 init 流程里, 跟硬件操作层无关.
+ * 跟 pc/ 唯一的差别就在这个文件: 把 printf 模拟换成真实 HAL 操作.
  */
 
 #include "led.h"

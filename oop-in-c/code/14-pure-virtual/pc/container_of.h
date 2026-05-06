@@ -4,7 +4,7 @@
  *
  * ch14 所有子类实现函数 (gpio_on / pwm_on / ...) 第一行依然用
  * container_of(me, struct led_xxx, base) 反推子类对象指针。
- * 完整解释见 ch13 § 13.4 + 13.7。
+ * 完整解释见 ch13 § 13.5 三步宏 container_of + § 13.7 这个东西叫什么。
  */
 #ifndef MY_CONTAINER_OF_H
 #define MY_CONTAINER_OF_H

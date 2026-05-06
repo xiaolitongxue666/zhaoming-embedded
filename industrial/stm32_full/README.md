@@ -33,7 +33,7 @@ stm32_full/
 ├── Core/                                    # CubeMX 风格的 MCU 启动入口
 │   ├── Inc/main.h
 │   └── Src/main.c                           # 真机 main: HAL_Init + SystemClock_Config + module_export_exec
-├── app/                                     # 应用层 (Simon 工业风格)
+├── app/                                     # 应用层 (工业代码风格)
 │   ├── project_config.h                     # PLATFORM_OS / PLATFORM_HEAP_ENABLE 等开关
 │   ├── platform/                            # 平台抽象层
 │   │   ├── platform_def.h                   # 跨编译器宏 + platform_err_t + container_of

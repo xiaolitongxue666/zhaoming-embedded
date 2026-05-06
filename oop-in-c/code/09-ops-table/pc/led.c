@@ -5,13 +5,12 @@
  *
  * @details
  * ops 表里函数指针的参数类型是 struct led_base *, 不是某个具体子类.
- * 这是因为 ops 表的最终用户是基类层 (ch10 起 led_on(base) 内部走
- * me->ops->on(me)), 所有子类的 ops 表必须类型一致 -- 否则基类层
- * 没法用同一份 dispatch 代码统一调用所有子类.
+ * 同一种行为接口要被不同子类共用, 参数类型必须收敛到 base, 否则
+ * 一种 ops 表只能服务一个子类, 失去 ops 打包的意义.
  *
  * 实现层从 base 反推到子类用强转 (struct led_xxx *)me. 这一招前提
- * 是 base 在子类的第一个字段, ch13 引入 container_of 后才让 base
- * 不必非得在第一个位置. 见 ch10 § 10.8.6 / ch13.
+ * 是 base 在子类的第一个字段 -- C 标准保证 struct 第一个字段地址
+ * 就是 struct 自身地址, 强转回去能拿到同一块内存.
  */
 
 #include "led.h"
@@ -136,8 +135,7 @@ const struct led_ops led_ops_pwm = {
  * 按名字访问 ops->on / ops->off / ops->toggle, 永远不会传反.
  *
  * 三个函数指针 NULL check 都不能少 (ch09 § 9.5.2): 某种 LED 不支持
- * toggle 时 ops->toggle 可能没填, 调用前必须查. ch14 会展开三种
- * 处理策略 (报错 / 空 stub / 纯虚约定).
+ * toggle 时 ops->toggle 可能没填, 调用前必须查.
  */
 
 int test_led(struct led_base *me, const struct led_ops *ops)

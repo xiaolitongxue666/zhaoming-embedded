@@ -2,16 +2,23 @@
 /*
  * app.c - 应用层
  *
- * 三个业务函数。整个文件里 grep gpio_write / pwm_ / i2c_ / HAL_ / sysfs /
- * platform_ops：全部 0 命中。应用层不认识硬件，硬件是谁它都不问，只
- * 通过 led_base * 句柄调 led_on / led_off / led_set_brightness。
+ * 三个真实业务函数:
+ *   alarm_blink     报警闪烁    (报警灯亮 -> 灭)
+ *   status_indicate 状态指示    (按错误码挑亮哪一盏)
+ *   power_on_test   开机自检    (三盏灯依次亮一遍)
  *
- * 这就是 ch15 想让你看见的：换主板（GPIO 换 PWM 换 I2C）、换平台（PC
- * 切 STM32 切 Linux）、换芯片（ch16 平台层下面再加一层），上面这三个
- * 业务函数都 0 改动。见 ch15 § 15.6 应用层。
+ * grep 这一份文件 LedGpio / LedPwm / LedI2c / gpio_write / HAL_ / sysfs:
+ * 全部 0 命中. 应用层不认识硬件, 硬件是谁它都不问, 只通过 led_base *
+ * 句柄调 led_on / led_off / led_set_brightness.
+ *
+ * 板级 (board_init.c) 同一时刻挂着 GPIO+PWM+I2C 三种不同硬件的子类,
+ * 应用层一个都不知道. 这就是"换硬件不改应用"在代码上的兑现.
+ *
+ * 见 ch15 § 15.5 应用层 + § 15.6 换硬件 diff.
  */
 
 #include "leds.h"
+#include "app.h"
 #include <stdio.h>
 
 void alarm_blink(void)
@@ -21,12 +28,13 @@ void alarm_blink(void)
 	led_off(g_led_error);
 }
 
-void status_breathe(void)
+void status_indicate(int err_code)
 {
-	printf("\n--- status_breathe ---\n");
-	led_set_brightness(g_led_status, 30);
-	led_set_brightness(g_led_status, 80);
-	led_set_brightness(g_led_status,  0);
+	printf("\n--- status_indicate(err_code=%d) ---\n", err_code);
+	if (err_code == 0)
+		led_on(g_led_status);
+	else
+		led_on(g_led_error);
 }
 
 void power_on_test(void)

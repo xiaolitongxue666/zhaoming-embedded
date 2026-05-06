@@ -393,27 +393,17 @@ Linux 内核段名 `.initcall6.init` 带点，链接器不会自动给它生成 
 
 走哪条都行，习惯就好。
 
-### 17.9.4 级别（level）什么时候有用
+### 17.9.4 级别（level）什么时候有用·BOARD / DEVICE / APP 三档
 
 简单项目就一个级别够用，复杂项目分级别。例子：
 
 - I2C 总线驱动必须在 I2C 设备驱动之前 init（不然设备 init 时找不到总线）。给总线 level=2，设备 level=4，启动期总线先跑。
 
-Linux 内核的 8 级（pure / core / postcore / arch / subsys / fs / device / late）和裸机 / RTOS 项目的 7 级是同一个思路在不同复杂度的版本：
-
-| 级别（工业 7 级） | 段名 | 跑什么 | Linux 内核对应 |
-|---|---|---|---|
-| BOARD | `INIT_BOARD_EXPORT` | 板级硬件配置（GPIO 复用、时钟、电源） | core / arch |
-| PREV_DEVICE | `INIT_PREV_EXPORT` | 设备前置（总线、I2C 控制器、SPI 控制器） | postcore / subsys |
-| DEVICE | `INIT_DEVICE_EXPORT` | 具体设备（LED、EEPROM、传感器、电机） | device |
-| COMPONENT | `INIT_COMPONENT_EXPORT` | 组件级（文件系统、网络栈） | fs / device |
-| ENV | `INIT_ENV_EXPORT` | 环境变量初始化（参数加载、上次断电恢复） | late |
-| APP | `INIT_APP_EXPORT` | 应用层模块（业务状态机、任务） | (用户态 init) |
-| SYSTEM_READY | `INIT_SYSREADY_EXPORT` | 全部就绪后的最后通知（喂狗、点亮 ready 灯） | (用户态 init) |
-
 设计原理就一句：**基础设施在前，上层依赖在后**。GPIO 没初始化好的时候让 LED 驱动 probe 是会崩的，所以 LED 必须晚于 GPIO；I2C 控制器没初始化好的时候让 I2C 设备驱动 probe 也会崩，所以 I2C 设备必须晚于控制器。级别的存在就是把这种"前后依赖"显式写出来，不用驱动作者去 main 里手排顺序。
 
-裸机项目可以从简单 1 级版本起步（本章 PC demo 就是一级），项目复杂度起来再加级别。RT-Thread 那 6 级（board / prev / device / component / env / app）够多数嵌入式项目用。
+BOARD / DEVICE / APP 三档够多数项目用。Linux 内核 0-7 共 8 级（pure / core / postcore / arch / subsys / fs / device / late）。工业代码命名习惯不同，对应不严格，思路是一样的：基础设施在前，上层依赖在后。
+
+裸机项目可以从简单 1 级版本起步（本章 PC demo 就是一级），项目复杂度起来再加级别。
 
 ### 17.9.5 同一级别内部的顺序
 
@@ -512,25 +502,9 @@ static void my_init(void)
 
 ## 17.12 工业代码里的 initcall 长什么样
 
-工业控制板项目用的就是 RT-Thread 风格的 initcall：
+工业控制板项目用的就是 RT-Thread 风格的 initcall：每个 driver 文件末尾一行 `INIT_DEVICE_EXPORT(xxx_init)`，`main` 里只 `rt_components_init()` 调一次，全部驱动自动挂上。多套产品共用一份驱动代码，每套产品只是板级初始化文件不同，这套机制让"共享驱动 + 独立板级"成为现实。
 
-```c
-/* drivers/led/led_main.c */
-static int led_main_init(void)
-{
-	register_led_handle("error",   &led_err_chip);
-	register_led_handle("status",  &led_status_chip);
-	register_led_handle("network", &led_net_chip);
-	return 0;
-}
-INIT_DEVICE_EXPORT(led_main_init);
-```
-
-每个 driver 文件末尾一行 `INIT_DEVICE_EXPORT`。`main` 里只 `rt_components_init()` 调一次，全部驱动自动挂上。
-
-5 套产品共用一份驱动代码，每套产品只是 `board_init.c` 不同，这套机制让"共享驱动 + 独立板级"成为现实。整个项目几十个驱动模块，main 只有不到 100 行。
-
-这就是开闭原则的最终工业落地。
+工业实战的完整代码和踩坑细节放在第 19 章主控案例里展开，这里不重复。
 
 ## 17.13 完整源码清单
 
@@ -838,8 +812,6 @@ make
 
 ## 下一章
 
-封装、继承、多态、向上转型、向下转型、纯虚 / 选填 / 接口、Platform 抽象、Linux 内核映射、链接自动初始化，18 章一路走下来，C 里做 OOP 的全套武器你都见过了。
-
-下一章不引入新概念。它把 19 期视频走过的路在书里串一遍，让你看清楚一颗 LED 是怎么从"三份重复代码"演化到"4000 万行内核都用同一套机制"的。
+链接自动初始化是这一段技术主线的最后一招。下一章把走过的路在书里串一遍。
 
 下一篇：[第 18 章 · 全书地图回顾 · 一颗 LED 走过的演化路径](18-全书地图.md)

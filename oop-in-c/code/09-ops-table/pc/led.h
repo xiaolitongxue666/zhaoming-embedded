@@ -21,16 +21,9 @@
  *   - 加新行为 (set_brightness) 在 ops 里加字段, 老调用方一字不改
  *
  * 这就是 Linux 内核 struct file_operations / net_device_ops 的骨架.
- * C++ 编译器看到带 virtual 的 class 也是偷偷生成这张表 (vtable),
- * 你这一章手动做一遍. 见 ch09 § 9.4 (C 对比 C++).
  *
  * 子类 struct led_gpio / led_pwm 这一章故意保持 ch07/ch08 的字段集
- * (base + 硬件参数), 不在子类里挂 ops 字段. ops 字段什么时候放进
- * 哪个 struct, 是 ch10 § 10.3 的核心决策 -- "放进 led_base 而不是
- * 子类", 一处定义、全员共享.
- *
- * test_led(me, ops) 这一章只接受外部传 ops 指针. ch10 起 ops 直接
- * 从 me 自己身上拿 (me->ops), 应用层连 ops 都不用管.
+ * (base + 硬件参数), 不在子类里挂 ops 字段.
  */
 
 #ifndef LED_H
@@ -49,7 +42,7 @@
 typedef int (*led_action_fn)(struct led_base *me);
 
 /*
- * struct led_ops - 操作表 (ops table, 也叫 vtable / virtual table).
+ * struct led_ops - 操作表.
  *
  * 把同一种 LED 的所有"可变行为"打包. 一种 LED 实现填一张表,
  * test_led 内部按名字 ops->on / ops->off 访问, 再也不会传反.
@@ -87,9 +80,7 @@ int led_pwm_init(struct led_pwm *me, const char *name,
  *
  * 第二个参数声明成 const struct led_ops * 而不是 struct led_ops *,
  * 表示 test_led 不会改 ops 表内容. 这一层 const 把"我手里这个 ops
- * 表别动"的意图传递到调用边界. 见 ch08 § 8.6.5 / ch10 § 10.8.2:
- * "const 修饰它右边的 token" -- 这里 const 在 struct led_ops 左边
- * 时, 等价于在右边 (C 语法两种写法都允许), 修饰的是 ops 指向的内容.
+ * 表别动"的意图传递到调用边界.
  */
 int test_led(struct led_base *me, const struct led_ops *ops);
 

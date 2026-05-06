@@ -6,7 +6,7 @@
  * 寄存器操作（这里写 DR_REG 这种"数据寄存器一次写整字"的风格）。
  * 在 PC 上用 printf 模拟。
  *
- * 这一份对应"按功能定义接口、按 chip 提供实现"——上层 led_gpio_brightness_set
+ * 这一份对应"按功能定义接口、按 chip 提供实现"。上层 led_gpio_brightness_set
  * 不需要知道这是厂商 A 的芯片，它只调 gpiod_set_value，gpiolib 自己
  * dispatch 到 vendor_a_set。
  *
