@@ -74,7 +74,7 @@ const struct led_ops led_ops_gpio = {
 };
 ```
 
-然后子类的 init 把这张表的地址传给基类 init：
+然后子类的 init 把这张表的地址传给父类 init：
 
 ```c
 int led_base_init(struct led_base *me, const char *name,
@@ -112,7 +112,7 @@ int led_pwm_init(struct led_pwm *me, const char *name,
 }
 ```
 
-每种子类的 init 把"我用哪张 ops 表"作为常量传给基类 init。基类 init 把它存到 `me->ops` 字段。一次填好，对象一辈子不用再改 ops。
+每种子类的 init 把"我用哪张 ops 表"作为常量传给父类 init。父类 init 把它存到 `me->ops` 字段。一次填好，对象一辈子不用再改 ops。
 
 GPIO 灯的 init 填 GPIO 的 ops 表，PWM 灯的 init 填 PWM 的 ops 表。各填各的，互不干扰。
 
@@ -377,7 +377,7 @@ int led_gpio_init(struct led_gpio *me, ...)
 
 应用层调用还是走 `me->ops->on(me)` 这个调用链。注意几件事：
 
-1. **应用层拿到的是基类指针** `struct led_base *`。子类的私有字段（`pin`、`channel`）藏在 `led_base` 后面，应用层看不见
+1. **应用层拿到的是父类指针** `struct led_base *`。子类的私有字段（`pin`、`channel`）藏在 `led_base` 后面，应用层看不见
 2. **ops 是 const**。运行时一般不会改实现，省一份指令缓存
 3. **ops 在 base 第一个字段**。Linux 内核 `struct file` 把 `f_op` 也放在前面，`file_operations` 表也是 const 表
 

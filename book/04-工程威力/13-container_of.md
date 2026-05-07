@@ -276,7 +276,7 @@ GPIO 的 base 在偏移 4，但 `gpio_on` 还是正确还原了 `magic = 0xCAFE`
 
 整个 Linux 内核源码 `git grep -c container_of` 大概 4-5 万处。从字符设备到网络栈到块层到内存管理子系统，到处都是这一行。
 
-它撑起了 Linux 整套"基类（subsystem 的 struct）+ 子类（驱动 driver 的 struct）"模式。读到内核任何一个驱动的回调函数，第一行十有八九就是 container_of。
+它撑起了 Linux 整套"父类（subsystem 的 struct）+ 子类（驱动 driver 的 struct）"模式。读到内核任何一个驱动的回调函数，第一行十有八九就是 container_of。
 
 ### 13.8.4 Linux 内核版宏剖析（硬核·可跳过）
 

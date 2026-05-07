@@ -1,0 +1,40 @@
+/* SPDX-License-Identifier: GPL-2.0
+ *
+ * leds-status-overlay.dts
+ *
+ * 配套 ch20·教学用 device-tree overlay
+ * 在运行时给系统加一个 status-led 节点·让 leds-status.ko 能匹配上 probe
+ *
+ * Raspberry Pi 4B (BCM2711)·GPIO17 物理脚是 40-pin 接口的第 11 脚
+ * 接一只 LED + 1k 限流到 GND 即可
+ *
+ * 编译：
+ *   dtc -@ -I dts -O dtb -o leds-status.dtbo leds-status-overlay.dts
+ *
+ * 启用：
+ *   sudo cp leds-status.dtbo /boot/overlays/
+ *   echo "dtoverlay=leds-status-overlay" | sudo tee -a /boot/config.txt
+ *   sudo reboot
+ *
+ * 也可以 runtime 加载 (Pi 5/Pi 4 内核 6.x)：
+ *   sudo dtoverlay leds-status.dtbo
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2711";
+
+    fragment@0 {
+        target-path = "/";
+
+        __overlay__ {
+            status_led: status-led {
+                compatible = "status-led";
+                gpios = <&gpio 17 0>;   /* GPIO17·flag 0 = active high */
+                status = "okay";
+            };
+        };
+    };
+};

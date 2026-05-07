@@ -135,7 +135,7 @@ led_on(&blue_led);
 > /* PIN_NUM('A', 13) = 0x0D, PIN_NUM('D', 12) = 0x3C */
 > ```
 >
-> 这套编码不是教学专用：和 `industrial/stm32_full/app/platform/arch/board/pin_board.c` 字节级一致（见附录 B）。读者过渡到工业版只多一层「字符串名 → uint8_t 编码」的解析（`platform_pin_get("PA.13")` 返回 `0x0D`），核心编码不变。
+> 这套编码不是教学专用：工业项目里也是一字节同时塞 port 和 pin 号，读者过渡到工业版只多一层「字符串名 → uint8_t 编码」的解析（`platform_pin_get("PA.13")` 返回 `0x0D`），核心编码不变。
 >
 > 早期章节为什么不直接上字符串名？因为字符串解析 + 查表机制 ch15 platform 层才登场，这里先用编码让「换 port + 换 pin」的概念跑通。Linux 内核 `gpio_set_value(unsigned int gpio, ...)` 用的是另一种类似思路（全局 gpio number），都是把 port + num 折成一个整数让接口签名干净。第 15 章和附录 B 会把这条工业纪律展开。
 
@@ -503,12 +503,12 @@ Linux 上同款抽象，完整工程见附录 C。
 
 ## 1.10 工业代码里的 led 长什么样
 
-**这一节是工业终态的早期一瞥，给你一张"未来三个月你会写出什么样的代码"的全景图**。下面要出现的概念（基类与子类、ops 表 / 虚函数表、基类层 dispatch（分发：走到对的实现）、纪律式封装）每一个都是后面 ch06 / ch09 / ch10 / ch11 才会系统展开的。**现在不用看懂任何细节**，只要扫一眼"代码最终长这样、应用层调用看不到 ops、换硬件不改应用层"就够了。看完本节回到 1.1 节继续从最朴素的状态走起，等读完 ch11 再回来重读这一节，那时候每一行都会自动通透。
+**这一节是工业终态的早期一瞥，给你一张"未来三个月你会写出什么样的代码"的全景图**。下面要出现的概念（父类与子类、ops 表 / 虚函数表、父类层 dispatch（分发：走到对的实现）、纪律式封装）每一个都是后面 ch06 / ch09 / ch10 / ch11 才会系统展开的。**现在不用看懂任何细节**，只要扫一眼"代码最终长这样、应用层调用看不到 ops、换硬件不改应用层"就够了。看完本节回到 1.1 节继续从最朴素的状态走起，等读完 ch11 再回来重读这一节，那时候每一行都会自动通透。
 
-我做的工业控制板项目里，LED 这一块分两层：基类一对 `.h / .c`，每种具体子类（GPIO LED / PWM LED / I²C LED）一对 `.h / .c`。基类那两份长这样：
+我做的工业控制板项目里，LED 这一块分两层：父类一对 `.h / .c`，每种具体子类（GPIO LED / PWM LED / I²C LED）一对 `.h / .c`。父类那两份长这样：
 
 ```c
-/* drivers/led/led_base.h · 基类公共头·子类和应用层都 #include */
+/* drivers/led/led_base.h · 父类公共头·子类和应用层都 #include */
 
 #include <stdbool.h>
 
@@ -539,7 +539,7 @@ int led_toggle(struct led_base *led);
 ```
 
 ```c
-/* drivers/led/led_base.c · 基类实现：把对外接口转发到子类 ops 表 */
+/* drivers/led/led_base.c · 父类实现：把对外接口转发到子类 ops 表 */
 
 #include "led_base.h"
 
@@ -577,7 +577,7 @@ int led_toggle(struct led_base *led)
 }
 ```
 
-`is_on` 这种状态字段在 dispatch 成功之后再更新，硬件操作失败时上层状态不会被改脏。工业代码里有的项目省掉 `is_on`、让硬件层每次自查，有的把它放在基类里给上层 query 用，看项目设计。
+`is_on` 这种状态字段在 dispatch 成功之后再更新，硬件操作失败时上层状态不会被改脏。工业代码里有的项目省掉 `is_on`、让硬件层每次自查，有的把它放在父类里给上层 query 用，看项目设计。
 
 ```c
 /* environment_cfg/environment_export.h · 公开句柄，应用层用它 */
@@ -689,7 +689,7 @@ make
 
 跨章共享的部分在 `oop-in-c/code/common/`：`platform.h` 是这本书每一章 `pc/` 都 #include 的对外接口头（也是 STM32 端 `led_stm32.c` 实现的同一个头），`platform_pc.c` 是 PC 端的 platform 实现。本章你看到的 `[GPIO] PA.13 ...` 日志就出自这一份。
 
-ch01-ch10 早期教学章节配套代码都简化为这两份对照（PC + STM32），让你专注 OOP 概念本身。Linux 用户态完整工程见附录 C，工业级 ops 表 / 多子类 / 多平台见 `industrial/` 目录和后面章节。
+ch01-ch10 早期教学章节配套代码都简化为这两份对照（PC + STM32），让你专注 OOP 概念本身。Linux 用户态完整工程见附录 C，工业级 ops 表 / 多子类 / 多平台见后面工业实战章节。
 
 ## 1.12 视频回放
 

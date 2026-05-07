@@ -1,0 +1,13 @@
+/* SPDX-License-Identifier: Apache-2.0
+ *
+ * Demo 2 用·只改 led0 的 label
+ * 验证 overlay 生效·应用层零改动·重新 build 后 printk 输出新 label
+ *
+ * 配套 ch19/19.8 dts 解耦
+ * stm32f4_disco 的 4 颗用户 LED 在 zephyr/boards/st/stm32f4_disco/stm32f4_disco.dts
+ * 节点名 green_led_4 (LD4) / orange_led_3 (LD3) / red_led_5 (LD5) / blue_led_6 (LD6)
+ */
+
+&green_led_4 {
+    label = "Demo Board LD4 (overlay)";
+};

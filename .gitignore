@@ -38,6 +38,12 @@ _book/
 # Linux 内核源码（v6.6 LTS，本地教学参考用·不推送到 remote）
 /linux-kernel/
 
+# Zephyr RTOS 源码（v3.7.0 LTS，本地教学参考用·不推送到 remote）
+/zephyr-3.7.0/
+
+# 临时研究素材（写章节时给 sub-agent 用·完成后删除）
+/_research/
+
 # 私有部署/构建脚本（作者自己用·不发布给读者）
 /build.bat
 /deploy.bat

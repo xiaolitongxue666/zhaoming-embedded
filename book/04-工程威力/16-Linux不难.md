@@ -421,7 +421,7 @@ void led_gpio_brightness_set(struct gpio_desc *desc, int value)
 
 ### 文件 3：`gpio_chip.h`（49 行）
 
-基类接口。`struct gpio_chip` 是每家芯片要实现的"模板"，`struct gpio_desc` 是 consumer 拿到的句柄。
+父类接口。`struct gpio_chip` 是每家芯片要实现的"模板"，`struct gpio_desc` 是 consumer 拿到的句柄。
 
 ```c
 /* SPDX-License-Identifier: MIT */
@@ -788,6 +788,8 @@ rt_pin_write(LED_PIN, PIN_HIGH);
 
 > 这本书 ch15 教你怎么自抽 platform 层. 它的反面同样重要: 看到内核已经抽好的环境 (Linux / Zephyr / RT-Thread / NuttX), 别再抽. 自抽 platform 不是工业级的标志, **会判断什么时候不抽才是**. 这是 ch15 / ch16 / 附录 B / 附录 C 四个章节合起来想送给你的工程判断力.
 
+Zephyr driver framework 完整工程·照着 5 分钟跑通·见**附录 B**。
+
 ## 16.14 应用层驱动 vs 内核层驱动：怎么选
 
 上一节讲清楚了"内核已做完别再抽". 但 Linux 这一档环境上还有第二个问题: 你要写一个新硬件的驱动, 写在哪一层. 应用层 (libgpiod / sysfs / iio / spidev / i2c-dev) 还是内核层 (driver model / kernel module). 工程师面试聊到这一关, 一半人答不清楚. 这一节给你一份判断表.
@@ -833,6 +835,8 @@ rt_pin_write(LED_PIN, PIN_HIGH);
 3. MCU 资源紧仍想要这套 -> clone Zephyr / RT-Thread 拔现成框架, 别自抽.
 
 > 写驱动的本事不在于会写, 在于会判断 "这一层该不该有". 工业代码里最贵的不是开发时间, 是 5 年后还能不能维护得动. 走对位置, 维护成本砍 10 倍.
+
+Linux 用户态写应用 + 自己写一个 platform driver 模块的完整流程·见**附录 C**·你会亲手在 Raspberry Pi 4B 上跑一个 leds-status.ko。
 
 ## 16.15 视频回放
 
