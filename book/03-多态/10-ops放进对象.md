@@ -171,23 +171,92 @@ C++ 还做了一件 C 没做的事：**自动判断**对象有没有 virtual 函
 
 ## 10.6 视频里没讲透的几个细节
 
-### 10.6.1 ops 是 const 还是 const 指针
+### 10.6.1 const 在 led_ops 前还是 `*` 后·语义反过来
+
+新人看到下面这两行常分不清：
 
 ```c
-const struct led_ops *ops;
+const struct led_ops *ops;       /* 工业代码这么写 */
+struct led_ops * const ops;      /* 含义反过来 */
 ```
 
-`const` 在 `struct led_ops` 后面，修饰的是 `struct led_ops`（左边的），含义是"指向常量 `led_ops` 的指针"。指针 `ops` 本身是变量，可以改 `me->ops = ...`；但 `me->ops->on = ...` 不行（指向的内容是 const）。
+差一个 `const` 的位置，能干的事和不能干的事调换。下面给两个记忆心法和一张速查表，看完不再被 const 卡住。
 
-如果把 const 写在指针后面：
+**心法 1·const 紧贴谁，就锁谁。** `const` 这个关键字看它紧贴的是哪个词：紧贴类型 `struct led_ops`，锁的是"指向的内容"（不能改 `me->ops->on = ...`）；紧贴 `*`，锁的是"指针自己"（不能改 `me->ops = ...`）。
 
 ```c
-struct led_ops * const ops;
+const struct led_ops *ops;       /* const 紧贴 led_ops, 锁内容 */
+struct led_ops * const ops;      /* const 紧贴 *, 锁指针 */
 ```
 
-含义反了：const 修饰的是 `ops` 这个指针本身。不能改 `me->ops = ...`，但能改 `me->ops->on = ...`。
+看一眼 `const` 写在哪个词旁边，就知道锁的是哪一边。
 
-工业代码用第一种。表本身常量（不能改实现），但字段位置可以重新赋值（极端场景下运行时换 ops 表）。Linux 内核 `file_operations` 全是这种风格。
+**心法 2·在 `*` 处画一刀。** 把声明从 `*` 处切开，两边各自看：
+
+```
+const struct led_ops  |  *  ops;        左边带 const, 锁内容
+struct led_ops        |  * const ops;   右边带 const, 锁指针
+```
+
+`*` 左边写的是"指向的东西长什么样"，右边写的是"指针本身什么属性"。哪边出现 `const`，哪边就被锁住。初学时建议每个 const 声明都画一刀，几次之后形成肌肉记忆。
+
+**一个容易混淆的等价写法。** 下面这两行**完全等价**：
+
+```c
+const struct led_ops *ops;       /* 标准写法 */
+struct led_ops const *ops;       /* 等价写法 */
+```
+
+按"const 紧贴谁锁谁"看：两行里 `const` 都紧贴 `struct led_ops`，都是锁内容。位置在前在后不影响语义。读源码遇到第二种不要慌，和第一种是一回事。
+
+C 标准的严格规则是"const 修饰它紧邻的左边，左边没东西时修饰右边"。这条规则严谨但反直觉，回到"紧贴谁锁谁"心法就够用，覆盖所有情况。
+
+**4 种组合速查：**
+
+| 写法 | 内容 `me->ops->on` | 指针 `me->ops` | 等价写法 |
+|---|---|---|---|
+| `const T *ops` | 锁·不能改 | 可改 | `T const *ops` |
+| `T * const ops` | 可改 | 锁·不能改 | （唯一写法） |
+| `const T * const ops` | 锁 | 锁 | `T const * const ops` |
+| `T *ops` | 可改 | 可改 | （唯一写法） |
+
+工业代码绝大多数选第一种 `const T *`。下面说为什么。
+
+**为什么用 `const T *`，而不是双锁。** 先排除两种：
+
+- `T *ops`（无 const），两边都开放，没人这么写，因为 ops 表内容被任意改是一颗大 bug
+- `T * const ops`（只锁指针），在 ops 这种场景几乎用不到，因为它允许改 `me->ops->on = ...`，这才是真正危险的事
+
+剩下两种是真正候选：
+
+- `const T *ops`，锁内容，不锁指针
+- `const T * const ops`，双锁
+
+为什么不直接双锁？最硬的原因：双锁后 `me->ops` 字段任何后续赋值都不行，连 `init` 函数都没法给它填值：
+
+```c
+struct led_base {
+    const struct led_ops * const ops;     /* 假设双锁 */
+};
+
+int led_base_init(struct led_base *me, const struct led_ops *ops) {
+    me->ops = ops;     /* 编译错: assignment of read-only member */
+}
+```
+
+所以工业代码必须用 `const T *`，让 `me->ops` 在 init 时能被赋值。这同时也打开了"运行时换整张表"的可能，常见场景两个：
+
+第一·LED 模式切换。调试期跑 GPIO 模式，产品阶段切到 PWM 模式。运行时 `me->ops = &led_ops_pwm;` 重新指，整张表换掉。
+
+第二·驱动适配多版本硬件。同一份驱动代码，根据硬件版本号决定 `me->ops = &ops_v1` 还是 `me->ops = &ops_v2`，跑在不同代板子上，应用层不感知。
+
+总之：**只锁内容，不锁指针**。每个 ops 表的实现固定（不准有人手贱改 `gpio_on` 的指向），但留 `me->ops` 这个口子，init 和运行时切换都合法。
+
+```c
+const struct led_ops *ops;       /* 工业代码标准写法 */
+```
+
+记住这一行，读 Linux 内核的 `file_operations`、`inode_operations`、`kobj_type` 这些表时不会再被 const 卡住，它们都是 `const T *` 风格，原因和这里一样：init 时要能赋值，运行时保留切换的可能。
 
 ### 10.6.2 sizeof(led_base) 多了几个字节
 
