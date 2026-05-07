@@ -41,14 +41,16 @@ pc/
 ├── Makefile           gcc -Wall -Wextra -std=c99
 ├── led_base.h         struct led_base 加 ops 字段
 ├── led_base.c         led_base_init 把 ops 一次填好
-├── led.h              struct led_ops + struct led_gpio/led_pwm + test_led
-├── led.c              gpio_xxx / pwm_xxx 实现 + 两张 const ops 表 + test_led
+├── led_gpio.h/.c      GPIO 子类 + led_ops_gpio 表
+├── led_pwm.h/.c       PWM 子类 + led_ops_pwm 表
 └── main.c             演示 test_led(&me.base) 与 me->ops->on(me)
-stm32-snippet/
-└── led_stm32.c        STM32 HAL 实现 platform_gpio_*
-linux-snippet/
-└── led_linux.c        Linux sysfs 实现 platform_gpio_*
+platform-mcu/
+└── stm32/
+    ├── led_gpio.c     GPIO 子类的 STM32 实现 + platform_gpio_* (用 PIN_NUM 编码)
+    └── led_pwm.c      PWM 子类的 STM32 实现 (HAL_TIM_PWM_*)
 ```
+
+Linux 用户态完整工程见附录 C。
 
 ## 编译运行
 

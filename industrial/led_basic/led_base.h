@@ -1,49 +1,54 @@
 /* SPDX-License-Identifier: MIT */
-/**
-  ******************************************************************************
-  * @file    led_base.h
-  * @brief   The header file of common led interface,
-  *          base class for all led classes.
-  *
-  * @details 见第 19 章 § 19.1 "LED 驱动: 最小继承范例". 这一份是工业项目里
-  *          LED 父类层的最小骨架: 一颗 ops 表 (vptr) + 两个纯虚函数 (led_on /
-  *          led_off). 应用层只见 led_base_t * 句柄, 永远不知道下层是 GPIO
-  *          拉线还是 PWM 调亮度还是 I²C 寄存器写, 切实现把 led_xxx_init
-  *          替换即可, 应用层一字不动.
-  ******************************************************************************
-  */
+/*
+ * led_base.h - LED 基类 + 公开接口.
+ *
+ * 工业项目 LED 驱动最小骨架. 应用层只见 struct led_base * 句柄, 不知道
+ * 下层是 GPIO 拉线 / PWM 调亮度 / I2C 寄存器写. 切换实现把 led_xxx_init
+ * 替换即可, 应用层一字不动. 见第 19 章 19.1 节.
+ *
+ * 所有 LED 操作 (led_on / led_off / led_set_brightness) 都在这里声明,
+ * 应用层只 #include "led_base.h" 就够了, 不要直接 include 子类头文件.
+ */
 
 #ifndef __LED_BASE_H
 #define __LED_BASE_H
 
-struct led_base_ops;
+#include <stdbool.h>
+#include <stdint.h>
 
-/* Exported types ------------------------------------------------------------*/
-/**
-  * @brief 父类对象. 只放一个 ops 指针, 任何具体子类 (led_gpio_t / led_pwm_t /
-  *        led_i2c_t) 把它放在第一字段做向上转型 (见第 12 章 "向上转型").
-  */
-typedef struct
-{
-	struct led_base_ops *ops;	/* vptr: 指向子类填充的 ops 表 */
-}led_base_t;
+#include "platform_def.h"
 
-/**
-  * @brief 父类的虚函数表 (vtable). 子类实例化时填这两根纯虚函数指针,
-  *        见第 14 章 "纯虚与抽象类". 不填就是空指针解引用直接死机.
-  */
-typedef struct led_base_ops
-{
-    /* pure virtual function: 子类必须实现 */
-    void (*led_on)(led_base_t *me);
-    void (*led_off)(led_base_t *me);
-}led_base_ops_t;
+struct led_base;
 
-/* Public functions ----------------------------------------------------------*/
-/* 父类对外接口. 实现里只做 ops dispatch, 见 led_base.c. */
-void led_on(led_base_t *me);
-void led_off(led_base_t *me);
+/* led_ops - LED 子类必须实现的虚函数表.
+ *
+ *   on / off                纯虚, 子类必填, 父类 dispatch 时 assert
+ *   set_brightness          可选, 子类不填走父类默认 no-op (GPIO LED /
+ *                           I2C 简单 LED 不支持调亮度)
+ */
+struct led_ops {
+	platform_err_t (*on)(struct led_base *me);
+	platform_err_t (*off)(struct led_base *me);
+	platform_err_t (*set_brightness)(struct led_base *me, uint8_t level);
+};
 
-#endif
+/* led_base - 所有 LED 子类的父类.
+ *
+ *   ops    指向子类的虚函数表 (static const, 实例间共享)
+ *   name   实例名, 调试 / 日志友好
+ *   is_on  当前开关状态, 父类记录, 子类不要直接改
+ */
+struct led_base {
+	const struct led_ops *ops;
+	const char           *name;
+	bool                  is_on;
+};
 
-/******************** END OF FILE ******************END OF FILE****/
+/* 公开接口 - 应用层只调这一组, 不直接访问 ops */
+platform_err_t led_base_init(struct led_base *me, const char *name,
+                             const struct led_ops *ops);
+platform_err_t led_on(struct led_base *me);
+platform_err_t led_off(struct led_base *me);
+platform_err_t led_set_brightness(struct led_base *me, uint8_t level);
+
+#endif /* __LED_BASE_H */

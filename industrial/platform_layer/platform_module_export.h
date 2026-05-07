@@ -4,7 +4,7 @@
   * @file    platform_module_export.h
   * @brief   8 级链接自动初始化机制对外接口.
   *
-  * @details 见第 17 章 "initcall" + 第 19 章 § 19.3 "initcall 7 级". 工业代码
+  * @details 见第 17 章 "initcall" + 第 19 章 § 19.6 "initcall: 让所有驱动自动按顺序启动". 工业代码
   *          里每个驱动 / 配置层 / 应用模块自带一行 INIT_xxx_EXPORT(fn), 启动期
   *          platform_module_export_exec() 按 1->7 级顺序自动跑完, 不需要在
   *          main 里手写一长串 led_init(); uart_init(); ... 跟 RT-Thread 同款,

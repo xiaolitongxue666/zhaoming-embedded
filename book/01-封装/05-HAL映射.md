@@ -257,7 +257,7 @@ void HAL_GPIO_WritePin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin,
 
 PC 模拟版在 [`oop-in-c/code/05-hal-mapping/pc/`](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/05-hal-mapping/pc/)。Makefile + main.c + hal_gpio.c + gpio_typedef.h 一个文件不少，gcc 编完就跑。
 
-真实 STM32 上的等效片段（节选自 [`oop-in-c/code/05-hal-mapping/stm32-snippet/hal_gpio_real.c`](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/05-hal-mapping/stm32-snippet/hal_gpio_real.c)）：
+真实 STM32 上的等效片段（节选自 [`oop-in-c/code/05-hal-mapping/platform-mcu/stm32/hal_gpio_real.c`](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/05-hal-mapping/platform-mcu/stm32/hal_gpio_real.c)）：
 
 ```c
 GPIO_InitTypeDef cfg = {0};
@@ -288,19 +288,9 @@ write("/sys/class/gpio/gpio13/value", "1")
    -> 最终还是 BSRR 或类似的硬件寄存器
 ```
 
-[`oop-in-c/code/05-hal-mapping/linux-snippet/sysfs_gpio_real.c`](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/05-hal-mapping/linux-snippet/sysfs_gpio_real.c) 演示了用户态最朴素的 sysfs 用法：
-
-```c
-gpio_export(13);
-gpio_set_dir(13, "out");
-gpio_write(13, 1);
-sleep(1);
-gpio_write(13, 0);
-```
-
 sysfs 的"把硬件当文件"机制怎么和内核的 `file_operations` + `gpio_chip` 衔接起来：`gpio_chip` 是第 16 章的内容，`file_operations` 是第 18 章 § 18.1 的内容。这一章先看到"用户态调用还是同一个套路"。
 
-新内核推荐 libgpiod 替代 sysfs，附录 C 会展开。
+完整工程见附录 C（新内核推荐 libgpiod 替代 sysfs，附录里展开）。
 
 ## 5.11 工业代码里的对应
 
@@ -324,6 +314,8 @@ int ds2433_deinit(ds2433_t *me);
 int ds2433_read(ds2433_t *me, uint32_t addr, void *buf, size_t n);
 int ds2433_write(ds2433_t *me, uint32_t addr, const void *buf, size_t n);
 ```
+
+> ds2433 用了 `typedef struct ... ds2433_t` 写法·这是工业代码沿用的早期风格。本书新章节代码统一改 struct（理由 ch01 § 1.7.3 已讲）·历史代码看到 `_t` 后缀不必惊讶。
 
 字段命名、`<MOD>_TypeDef` 风格、init/deinit 配对、`me` 指针作为第一参数，跟 HAL 库的 GPIO 一字不差，跟前 4 章你学的一字不差。
 

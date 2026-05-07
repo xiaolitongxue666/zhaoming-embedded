@@ -29,15 +29,14 @@ pc/
 ├── led.c         test_led 实现 + 6 个 printf 占位
 └── main.c        三组调用演示
 
-stm32-snippet/
-└── led_stm32.c   六个占位函数在 STM32 上的真实实现
-                   (HAL_GPIO_WritePin / __HAL_TIM_SET_COMPARE /
-                    HAL_I2C_Master_Transmit)
-
-linux-snippet/
-└── led_linux.c   六个占位函数在 Linux 用户态的真实实现
-                   (sysfs gpio / sysfs pwm / i2c-dev)
+platform-mcu/
+└── stm32/
+    └── led_stm32.c   六个占位函数在 STM32 上的真实实现
+                       (HAL_GPIO_WritePin / __HAL_TIM_SET_COMPARE /
+                        HAL_I2C_Master_Transmit)
 ```
+
+Linux 用户态完整工程见附录 C。
 
 ## 编译运行
 

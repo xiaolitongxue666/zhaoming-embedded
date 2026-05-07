@@ -28,14 +28,16 @@ struct motor {
 
 把 LED 和 Motor 共有的 `pin` 字段提到 `struct led_base`，子类各自把 `led_base` 嵌套进 struct 第一个位置。基类 init 由子类 init 链式调用。
 
-## 三套实现
+## 目录结构
 
 ```
 06-inherit-pain/
 ├── pc/                 完整可跑的 PC 模拟版
-├── stm32-snippet/      STM32 HAL 等效片段
-└── linux-snippet/      Linux sysfs 等效片段
+└── platform-mcu/
+    └── stm32/          STM32 真机版（用 PIN_NUM 编码）
 ```
+
+Linux 用户态完整工程见附录 C。
 
 ## 编译运行 (PC 版)
 

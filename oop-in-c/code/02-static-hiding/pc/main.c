@@ -31,8 +31,8 @@ int main(void)
 	printf("========================================\n\n");
 
 	printf("--- Init two LEDs (struct on stack) ---\n");
-	led_init(&red, 13);
-	led_init(&green, 14);
+	led_init(&red,   PIN_NUM('A', 13));   /* 0x0D = PA.13 */
+	led_init(&green, PIN_NUM('A', 14));   /* 0x0E = PA.14 */
 
 	printf("\n--- Turn both on ---\n");
 	led_on(&red);

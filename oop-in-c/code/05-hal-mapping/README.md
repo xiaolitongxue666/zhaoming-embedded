@@ -2,7 +2,7 @@
 
 第 5 章 [HAL 库源码漫游](../../../book/01-封装/05-HAL映射.md) 的配套代码。
 
-## 三套实现
+## 目录结构
 
 ```
 05-hal-mapping/
@@ -11,9 +11,11 @@
 │   ├── hal_gpio.h          HAL_GPIO_Init / WritePin / ...
 │   ├── hal_gpio.c          .c 实现 + static 辅助函数
 │   └── main.c              用真实 HAL 命名跑一遍
-├── stm32-snippet/      对照真实 stm32h7xx_hal_gpio.c
-└── linux-snippet/      对照 Linux sysfs gpio
+└── platform-mcu/
+    └── stm32/          对照真实 stm32h7xx_hal_gpio.c
 ```
+
+Linux 用户态完整工程见附录 C。
 
 ## 教学要点
 

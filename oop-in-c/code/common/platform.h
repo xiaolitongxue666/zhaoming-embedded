@@ -26,13 +26,20 @@
 
 /*
  * pin 是一个编码值，包含 port + 引脚号。工业代码通用做法：
- *   #define PIN(port, num)   (((port) << 4) | ((num) & 0xF))
- * 调用方写 PIN(D, 12) 表示 PD12。port 信息藏在 pin 编码里，
+ *   高 4 位 = port 索引 (A=0, B=1, ..., I=8)
+ *   低 4 位 = pin 号 (0-15)
+ *
+ * 例: PIN_NUM('A', 13) = 0x0D  (PA.13)
+ *     PIN_NUM('D', 12) = 0x3C  (PD.12)
+ *     PIN_NUM('I', 14) = 0x8E  (PI.14)
+ *
+ * 调用方写 PIN_NUM('D', 12) 表示 PD.12。port 信息藏在 pin 编码里，
  * 接口签名永远只有一个 pin 参数——这样换芯片（port 数量、命名都变）
- * 时，签名不动、调用点不动，只有 PIN 宏的展开和 platform 实现要改。
+ * 时，签名不动、调用点不动，只有 PIN_NUM 宏的展开和 platform 实现要改。
  * Linux 内核 gpio_set_value(unsigned int gpio, ...) 同款做法。
  * 详见 ch01 1.x 节 + ch15 / 附录 B 展开。
  */
+#define PIN_NUM(port, num)    ((((port) - 'A') << 4) | ((num) & 0x0F))
 
 /**
  * @brief  初始化一个GPIO引脚

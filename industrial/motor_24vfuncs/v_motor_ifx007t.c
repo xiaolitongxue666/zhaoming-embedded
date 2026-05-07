@@ -13,7 +13,7 @@
   *   │   3. 满速线性加速（起步占空 -> 100%）               │
   *   │   4. 减速区限位 + 三层超时保护                      │
   *   │   5. IS 引脚电流采样 + EMA 滤波过流故障判断         │
-  *   │ OOP 骨架完全不变：v_motor_base_t 的 3 个 ops          │
+  *   │ OOP 骨架完全不变：struct v_motor_base 的 3 个 ops          │
   *   │ + 1 个错误回调，子类内部把所有这些异步行为塞进         │
   *   │ 工作线程 + 周期定时器。上层应用层永远只见             │
   *   │ v_motor_base_move(motor, UP) 这一句普通函数调用。     │
@@ -49,8 +49,8 @@
 
 /* ADC 通道接口由调用方提供。这里只 extern 声明本驱动需要的两个函数，
  * 让 v_motor_ifx007t.c 不强依赖某个具体 ADC 抽象层。 */
-extern void  adc_channel_start(adc_channel_base_t *ch);
-extern float adc_channel_cur_volt_mv_get(adc_channel_base_t *ch);
+extern void  adc_channel_start(struct adc_channel_base *ch);
+extern float adc_channel_cur_volt_mv_get(struct adc_channel_base *ch);
 
 
 /* ================================================================== *
@@ -87,7 +87,7 @@ extern float adc_channel_cur_volt_mv_get(adc_channel_base_t *ch);
 #define V_MOTOR_RAMP_TIME_MS                (500)
 
 /* 周期工作定时器节拍（ms）。所有加减速、故障检测、限位轮询
- * 都跑在这一拍里。10ms 是经验值——再快 CPU 占用太高、再慢
+ * 都跑在这一拍里。10ms 是经验值, 再快 CPU 占用太高、再慢
  * 加速曲线会卡顿肉眼可见。 */
 #define V_MOTOR_WORK_TIMER_PERIOD           (10)
 
@@ -151,7 +151,7 @@ typedef enum
 typedef struct
 {
     v_motor_pwm_work_type_t type;
-    v_motor_base_dir_t      dir;
+    enum v_motor_base_dir      dir;
 } v_motor_pwm_msg_t;
 
 
@@ -159,18 +159,18 @@ typedef struct
  *  静态前向声明                                                       *
  * ================================================================== */
 
-static void _hw_pwm_all_off(v_motor_ifx007t_t *me);
-static void _hw_sleep_off  (v_motor_ifx007t_t *me);
-static void _hw_sleep_on   (v_motor_ifx007t_t *me);
-static void _motor_stop    (v_motor_ifx007t_t *me);
-static void _motor_move    (v_motor_ifx007t_t *me, v_motor_base_dir_t dir);
-static void _motor_timer_timeout(v_motor_ifx007t_t *me);
-static void _motor_fault_clear  (v_motor_ifx007t_t *me);
-static void _calc_ramp_params   (v_motor_ifx007t_t *me, v_motor_base_dir_t dir);
-static void _hw_start_pwm_output(v_motor_ifx007t_t *me, v_motor_base_dir_t dir);
-static void _is_fault_check       (v_motor_ifx007t_t *me);
-static void _dece_timeout_check   (v_motor_ifx007t_t *me);
-static void _motion_timeout_check (v_motor_ifx007t_t *me);
+static void _hw_pwm_all_off(struct v_motor_ifx007t *me);
+static void _hw_sleep_off  (struct v_motor_ifx007t *me);
+static void _hw_sleep_on   (struct v_motor_ifx007t *me);
+static void _motor_stop    (struct v_motor_ifx007t *me);
+static void _motor_move    (struct v_motor_ifx007t *me, enum v_motor_base_dir dir);
+static void _motor_timer_timeout(struct v_motor_ifx007t *me);
+static void _motor_fault_clear  (struct v_motor_ifx007t *me);
+static void _calc_ramp_params   (struct v_motor_ifx007t *me, enum v_motor_base_dir dir);
+static void _hw_start_pwm_output(struct v_motor_ifx007t *me, enum v_motor_base_dir dir);
+static void _is_fault_check       (struct v_motor_ifx007t *me);
+static void _dece_timeout_check   (struct v_motor_ifx007t *me);
+static void _motion_timeout_check (struct v_motor_ifx007t *me);
 
 
 /* ================================================================== *
@@ -180,7 +180,7 @@ static void _motion_timeout_check (v_motor_ifx007t_t *me);
 /* 关闭两路 PWM 输出：先把 pulse 写 0（占空清零，输出立即变低），
  * 再 disable 整个通道（关 timer 输出比较）。两步都做的原因是
  * 部分 MCU 的 PWM 关闭后通道电平残留，得手动把 pulse 清零。 */
-static void _hw_pwm_all_off(v_motor_ifx007t_t *me)
+static void _hw_pwm_all_off(struct v_motor_ifx007t *me)
 {
     platform_pwm_set_pulse(me->ctrl_1_pwm_dev,
                            me->ctrl_1_pwm_channel, 0);
@@ -194,7 +194,7 @@ static void _hw_pwm_all_off(v_motor_ifx007t_t *me)
 
 /* INH 拉低 = 两片 IFX007T 进入休眠，整个 H 桥高阻断电。
  * 用来真正"停"电机或者清过温锁。 */
-static void _hw_sleep_off(v_motor_ifx007t_t *me)
+static void _hw_sleep_off(struct v_motor_ifx007t *me)
 {
     platform_pin_write(me->sleep1_pin, 0);
     platform_pin_write(me->sleep2_pin, 0);
@@ -202,7 +202,7 @@ static void _hw_sleep_off(v_motor_ifx007t_t *me)
 
 /* INH 拉高 = 唤醒 IFX007T，进入工作状态。运动前必须先唤醒，
  * 否则 PWM 信号到 IN 引脚也没用。 */
-static void _hw_sleep_on(v_motor_ifx007t_t *me)
+static void _hw_sleep_on(struct v_motor_ifx007t *me)
 {
     platform_pin_write(me->sleep1_pin, 1);
     platform_pin_write(me->sleep2_pin, 1);
@@ -214,7 +214,7 @@ static void _hw_sleep_on(v_motor_ifx007t_t *me)
  * ================================================================== */
 /* 调用方：每 10ms 由 _motor_timer_timeout() 调一次。                  */
 
-static void _is_fault_check(v_motor_ifx007t_t *me)
+static void _is_fault_check(struct v_motor_ifx007t *me)
 {
     /* 没接 IS 通道（构造时传 NULL），跳过过流保护。
      * 教学样本里大多没接 ADC，这里允许优雅降级。 */
@@ -286,7 +286,7 @@ static void _is_fault_check(v_motor_ifx007t_t *me)
  * 异常情况：限位一直被压着 5s 不松开，机械卡死或限位短路。
  *           强制停车并报硬件故障。 */
 
-static void _dece_timeout_check(v_motor_ifx007t_t *me)
+static void _dece_timeout_check(struct v_motor_ifx007t *me)
 {
     bool top_pressed =
         (platform_pin_read(me->top_dece_pin)
@@ -327,7 +327,7 @@ static void _dece_timeout_check(v_motor_ifx007t_t *me)
 /* 任何一次 motor_move 启动后 30s 还没到位（没 motor_stop / 没踩限位
  * 后停下），认为出大问题，强制停车 + 报错。 */
 
-static void _motion_timeout_check(v_motor_ifx007t_t *me)
+static void _motion_timeout_check(struct v_motor_ifx007t *me)
 {
     me->motion_timeout_count++;
     if (me->motion_timeout_count >= V_MOTOR_MOTION_TIMEOUT_TICKS)
@@ -355,7 +355,7 @@ static void _motion_timeout_check(v_motor_ifx007t_t *me)
  *   4. osDelay(10) 等死区时间，让绕组电流泄放干净；
  *   5. INH 拉低进休眠；
  *   6. 复位所有运动期间的状态计数器。 */
-static void _motor_stop(v_motor_ifx007t_t *me)
+static void _motor_stop(struct v_motor_ifx007t *me)
 {
     osTimerStop(me->work_timer);
     osMessageQueueReset(me->work_queue);
@@ -381,8 +381,8 @@ static void _motor_stop(v_motor_ifx007t_t *me)
  *                       每拍递增 current_step_size
  *
  *   起步 pulse 由方向决定：上行 44%，下行 22%（重力补偿）。 */
-static void _calc_ramp_params(v_motor_ifx007t_t *me,
-                              v_motor_base_dir_t dir)
+static void _calc_ramp_params(struct v_motor_ifx007t *me,
+                              enum v_motor_base_dir dir)
 {
     uint32_t soft_total_steps =
         V_MOTOR_SOFT_START_TIME_MS / V_MOTOR_WORK_TIMER_PERIOD;
@@ -436,8 +436,8 @@ static void _calc_ramp_params(v_motor_ifx007t_t *me,
 /* 启动选定方向的 PWM 输出。
  *   UP   :  ctrl_1 = pwm_pulse, ctrl_2 = 0  (慢衰减斩波正向)
  *   DOWN :  ctrl_1 = 0,         ctrl_2 = pwm_pulse  (反向) */
-static void _hw_start_pwm_output(v_motor_ifx007t_t *me,
-                                 v_motor_base_dir_t dir)
+static void _hw_start_pwm_output(struct v_motor_ifx007t *me,
+                                 enum v_motor_base_dir dir)
 {
     if (V_MOTOR_BASE_MOVE_UP == dir)
     {
@@ -468,8 +468,8 @@ static void _hw_start_pwm_output(v_motor_ifx007t_t *me,
 }
 
 /* 启动一次方向运动（在 work_thread 上下文里运行）。 */
-static void _motor_move(v_motor_ifx007t_t *me,
-                        v_motor_base_dir_t dir)
+static void _motor_move(struct v_motor_ifx007t *me,
+                        enum v_motor_base_dir dir)
 {
     if (me->is_hw_error)
     {
@@ -485,7 +485,7 @@ static void _motor_move(v_motor_ifx007t_t *me,
 
     /*
      * 注意：先停 timer 防止下一拍 TIMER 消息进队列，但故意不
-     * Reset 队列。原因——上层调用方那边可能已经把
+     * Reset 队列。原因: 上层调用方那边可能已经把
      * STOP 消息排在队列里，绝不能丢。残留的 TIMER 消息无害，
      * 因为 work_dir 和 ramp 参数已经按新方向算过，下一拍
      * _motor_timer_timeout() 跑出来最多多走一个加速 step。
@@ -529,7 +529,7 @@ static void _motor_move(v_motor_ifx007t_t *me,
  *      两个方向都要兼容"反向"情形（电机被人手推回去）：
  *      pulse 比 current_min_pulse 小，沿软启动 step_size 升到 min。
  */
-static void _motor_timer_timeout(v_motor_ifx007t_t *me)
+static void _motor_timer_timeout(struct v_motor_ifx007t *me)
 {
     platform_device_pwm_t active_pwm_device;
     int32_t active_pwm_channel;
@@ -637,13 +637,13 @@ static void _motor_timer_timeout(v_motor_ifx007t_t *me)
 
 /* 清除硬件故障锁。
  *
- *   IFX007T 的过温保护是"锁住"型——一旦触发，必须把 INH 拉低
+ *   IFX007T 的过温保护是"锁住"型, 一旦触发，必须把 INH 拉低
  *   再拉高才能解锁。数据手册要求 INH 低电平至少 4us，
  *   这里给 10ms 大余量，肯定够。
  *
  *   除了硬件锁，软件层也要把 is_hw_error / 各计数器清零，
  *   否则下次 motor_move 还是会被 is_hw_error 拒绝。 */
-static void _motor_fault_clear(v_motor_ifx007t_t *me)
+static void _motor_fault_clear(struct v_motor_ifx007t *me)
 {
     log_i("Fault clear: INH reset start");
 
@@ -670,35 +670,35 @@ static void _motor_fault_clear(v_motor_ifx007t_t *me)
  *  让上层调用是非阻塞的。真正的硬件操作在 work_thread 里串行执行。     *
  * ================================================================== */
 
-static void motor_stop(v_motor_base_t *base)
+static void motor_stop(struct v_motor_base *base)
 {
-    v_motor_ifx007t_t *me = (v_motor_ifx007t_t *)base;
+    struct v_motor_ifx007t *me = (struct v_motor_ifx007t *)base;
     v_motor_pwm_msg_t msg;
     msg.type = V_MOTOR_PWM_STOP;
     msg.dir  = V_MOTOR_BASE_MOVE_STOP;
     osMessageQueuePut(me->work_queue, &msg, 0, 0);
 }
 
-static void motor_move(v_motor_base_t *base, v_motor_base_dir_t dir)
+static void motor_move(struct v_motor_base *base, enum v_motor_base_dir dir)
 {
-    v_motor_ifx007t_t *me = (v_motor_ifx007t_t *)base;
+    struct v_motor_ifx007t *me = (struct v_motor_ifx007t *)base;
     v_motor_pwm_msg_t msg;
     msg.type = V_MOTOR_PWM_MOVE;
     msg.dir  = dir;
     osMessageQueuePut(me->work_queue, &msg, 0, 0);
 }
 
-static void motor_fault_clear(v_motor_base_t *base)
+static void motor_fault_clear(struct v_motor_base *base)
 {
-    v_motor_ifx007t_t *me = (v_motor_ifx007t_t *)base;
+    struct v_motor_ifx007t *me = (struct v_motor_ifx007t *)base;
     v_motor_pwm_msg_t msg;
     msg.type = V_MOTOR_PWM_FAULT_CLEAR;
     msg.dir  = V_MOTOR_BASE_MOVE_STOP;
     osMessageQueuePut(me->work_queue, &msg, 0, 0);
 }
 
-/* 静态 ops 表 —— 整个进程只一份，所有 v_motor_ifx007t_t 实例共享。 */
-static const v_motor_base_ops_t ops =
+/* 静态 ops 表: 整个进程只一份，所有 struct v_motor_ifx007t 实例共享。 */
+static const struct v_motor_base_ops ops =
 {
     .motor_stop  = motor_stop,
     .motor_move  = motor_move,
@@ -714,7 +714,7 @@ static const v_motor_base_ops_t ops =
  * 天然避免了多线程并发访问 PWM/GPIO 的同步问题。 */
 static void work_thread(void *argument)
 {
-    v_motor_ifx007t_t *me = (v_motor_ifx007t_t *)argument;
+    struct v_motor_ifx007t *me = (struct v_motor_ifx007t *)argument;
     v_motor_pwm_msg_t msg;
 
     for (;;)
@@ -750,7 +750,7 @@ static void work_thread(void *argument)
  * 实际工作在专用线程里做"模式。 */
 static void v_motor_ifx007t_work_timer(void *argument)
 {
-    v_motor_ifx007t_t *me = (v_motor_ifx007t_t *)argument;
+    struct v_motor_ifx007t *me = (struct v_motor_ifx007t *)argument;
     v_motor_pwm_msg_t msg;
     msg.type = V_MOTOR_PERIOD_TIMER;
     msg.dir  = V_MOTOR_BASE_MOVE_STOP;
@@ -762,8 +762,8 @@ static void v_motor_ifx007t_work_timer(void *argument)
  *  构造函数                                                           *
  * ================================================================== */
 
-void v_motor_ifx007t_init(v_motor_ifx007t_t *me,
-                          v_motor_ifx007t_init_param_t *init_param)
+void v_motor_ifx007t_init(struct v_motor_ifx007t *me,
+                          struct v_motor_ifx007t_init_param *init_param)
 {
     const osTimerAttr_t timer_attr =
     {

@@ -17,7 +17,7 @@ gcc -Wall -Wextra -std=c99 -I../../common -o demo main.c led.c ../../common/plat
 
 ## 看到的输出
 
-每个 GPIO 操作打一行 `[GPIO] Pin13 -> HIGH (ON)`，每个 LED 操作打一行 `[LED] Pin13 ON`。三颗 LED（Pin 13/14/15）依次被同一份 `led_on()` 点亮——传不同的 `&red_led / &green_led / &blue_led` 指针即可。
+每个 GPIO 操作打一行 `[GPIO] PA.13 -> HIGH (ON)`，每个 LED 操作打一行 `[LED] PA.13 ON`。三颗 LED (PA.13 / PA.14 / PA.15) 依次被同一份 `led_on()` 点亮，传不同的 `&red_led / &green_led / &blue_led` 指针即可。
 
 ## Windows 用户
 

@@ -1,0 +1,94 @@
+/* SPDX-License-Identifier: MIT */
+/*
+ * 本文件是 STM32 真实硬件版本片段. 需要 STM32CubeMX 生成的 hi2c1 / htim3 等外设句柄.
+ * 实际工程里 platform_xxx 函数体直接调 HAL API.
+ * 用 mock-CubeMX 头文件可独立编译验证语法.
+ */
+
+/*
+ * led_stm32.c - 函数指针当参数 在 STM32 上的样子
+ *
+ * 三种 on/off 实现走真实硬件: GPIO 拉电平 / PWM 改占空比 / I2C 发命令.
+ * 三个函数签名都是 void name(int param), 这样同一个 test_led 用同一对
+ * 函数指针参数 void (*)(int) 能匹配任何一组实现.
+ *
+ * 第三个参数在不同实现里有不同含义: GPIO 是 PIN_NUM 编码 (port + pin),
+ * PWM 是通道号, I2C 是从机地址. 由调用方负责传匹配的 id.
+ *
+ * 真实工程里 PWM 通道、I2C 句柄通常通过文件级 static 全局拿到 (CubeMX
+ * 生成代码就是这套), 这里片段保留这个风格.
+ *
+ * pin 编码沿用 ch01 § 1.x 的 PIN_NUM('A', 13) 风格.
+ */
+
+#include "led.h"
+#include "stm32f4xx_hal.h"
+
+#define PIN_PORT_IDX(pin)     (((pin) >> 4) & 0x0F)
+#define PIN_NO(pin)           ((pin) & 0x0F)
+#define PIN_MASK(pin)         (1U << PIN_NO(pin))
+
+static GPIO_TypeDef * const _gpio_table[] = {
+	GPIOA, GPIOB, GPIOC, GPIOD, GPIOE,
+#if defined(GPIOF)
+	GPIOF,
+#else
+	NULL,
+#endif
+#if defined(GPIOG)
+	GPIOG,
+#else
+	NULL,
+#endif
+#if defined(GPIOH)
+	GPIOH,
+#else
+	NULL,
+#endif
+#if defined(GPIOI)
+	GPIOI,
+#else
+	NULL,
+#endif
+};
+
+#define PIN_PORT(pin)    (_gpio_table[PIN_PORT_IDX(pin)])
+
+extern TIM_HandleTypeDef htim3;     /* CubeMX 生成: 控 LED 的 PWM 定时器 */
+extern I2C_HandleTypeDef hi2c1;     /* CubeMX 生成: 控 LED 的 I2C 总线 */
+
+void gpio_on(int pin)
+{
+	HAL_GPIO_WritePin(PIN_PORT((uint8_t)pin), PIN_MASK((uint8_t)pin), GPIO_PIN_SET);
+}
+
+void gpio_off(int pin)
+{
+	HAL_GPIO_WritePin(PIN_PORT((uint8_t)pin), PIN_MASK((uint8_t)pin), GPIO_PIN_RESET);
+}
+
+void pwm_on(int channel)
+{
+	__HAL_TIM_SET_COMPARE(&htim3, (uint32_t)channel, 1000);   /* 占空比 100% */
+	HAL_TIM_PWM_Start(&htim3, (uint32_t)channel);
+}
+
+void pwm_off(int channel)
+{
+	__HAL_TIM_SET_COMPARE(&htim3, (uint32_t)channel, 0);
+	HAL_TIM_PWM_Stop(&htim3, (uint32_t)channel);
+}
+
+void i2c_on(int addr)
+{
+	uint8_t cmd[1] = { 0x01 };       /* 厂家协议: 0x01 = ON */
+	HAL_I2C_Master_Transmit(&hi2c1, (uint16_t)(addr << 1),
+	                        cmd, sizeof(cmd), 100);
+}
+
+void i2c_off(int addr)
+{
+	uint8_t cmd[1] = { 0x00 };       /* 厂家协议: 0x00 = OFF */
+	HAL_I2C_Master_Transmit(&hi2c1, (uint16_t)(addr << 1),
+	                        cmd, sizeof(cmd), 100);
+}

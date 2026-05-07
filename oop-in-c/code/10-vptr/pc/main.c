@@ -7,7 +7,9 @@
  */
 
 #include <stdio.h>
-#include "led.h"
+#include "led_base.h"
+#include "led_gpio.h"
+#include "led_pwm.h"
 
 int main(void)
 {
@@ -20,7 +22,7 @@ int main(void)
 	printf("  Each LED carries its own ops table.\n");
 	printf("========================================\n\n");
 
-	led_gpio_init(&red_led, "red", 13);
+	led_gpio_init(&red_led, "red", PIN_NUM('A', 13));   /* 0x0D = PA.13 */
 	led_pwm_init(&blue_led, "blue", 1, 70);
 
 	printf("\n--- test_led(&red_led.base) ---\n");

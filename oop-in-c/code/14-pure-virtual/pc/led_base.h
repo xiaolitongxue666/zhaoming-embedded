@@ -4,9 +4,10 @@
  * @brief led_base 字段集 + 共有 init (ch14 版, 沿用 ch10/ch13 一字不变)
  *
  * @details
- * 字段集和共有 init 接口跟 ch10/ch11/ch13 一字不变. 这一章所有的变化
- * 都在 led.c 里 (父类统一接口里加三种 NULL 处理策略), led_base 自身
- * 不动:
+ * 字段集跟 ch10/ch11/ch13 一字不变. 这一章把父类统一接口
+ * (led_on / led_off / led_set_brightness) 搬到了 led_base.c 里跟
+ * led_base_init 同住 -- 父类层负责的"必填 + 选填"两种 NULL 处理策略
+ * 都集中到一个文件里看清楚. led_base 字段集本身没动:
  *
  *     struct led_base {
  *         const struct led_ops *ops;     // 第 0 字段

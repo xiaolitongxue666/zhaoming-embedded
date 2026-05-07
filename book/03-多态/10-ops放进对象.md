@@ -316,17 +316,17 @@ static int gpio_on(struct led_base *me)
 
 ## 10.7 你现在的代码在 STM32 上长什么样
 
-STM32 端胶水还是 ch01 那套（节选自 [`oop-in-c/code/10-vptr/stm32-snippet/led_stm32.c`](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/10-vptr/stm32-snippet/led_stm32.c)）：
+STM32 端胶水还是 ch01 那套（节选自 [`oop-in-c/code/10-vptr/platform-mcu/stm32/led_gpio.c`](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/10-vptr/platform-mcu/stm32/led_gpio.c)，每个子类一个文件：`led_gpio.c` 装 GPIO 实现 + `platform_gpio_*` 胶水；`led_pwm.c` 装 PWM 实现 + TIM 操作；pin 仍是 `PIN_NUM('A', 13)` 编码，详见第 1 章 § 1.x PIN_NUM 编码）：
 
 ```c
 void platform_gpio_write(uint8_t pin, bool value)
 {
-	HAL_GPIO_WritePin(GPIOA, (uint16_t)(1U << pin),
+	HAL_GPIO_WritePin(PIN_PORT(pin), PIN_MASK(pin),
 	                  value ? GPIO_PIN_SET : GPIO_PIN_RESET);
 }
 ```
 
-`led_base.h / led_base.c / led_gpio.h / led_gpio.c / main.c` 一字不改。
+`led_base.h / led_base.c / led_gpio.h / led_gpio.c / led_pwm.h / led_pwm.c / main.c` 一字不改。
 
 但 `sizeof(struct led_base)` 从 8 字节涨到 12 字节（在 32 位 ARM 上 `ops` 4 + `name` 4 + `is_on` 1 + padding 3）。100 颗 LED 多用 400 字节 RAM。换来的是应用层完全不知道"调谁"这件事，加新 LED 不改驱动核心。在 STM32H7（1MB RAM）上完全划得来；在 ATmega328（2KB RAM）上要算账。
 
@@ -334,11 +334,9 @@ void platform_gpio_write(uint8_t pin, bool value)
 
 ## 10.8 你现在的代码在 Linux 用户态长什么样
 
-Linux 端的 sysfs 实现（`led_linux.c`）一字不改。
+Linux 上 GPIO 子类内部直接调 libgpiod，应用层和 base 层一字不改（完整工程见附录 C）。Linux 用户态没有 platform 抽象层，内核 driver model 已经把 platform 抽象做完了，应用层再套一层是反工程（§ 15.15）。
 
-进程的 `.rodata` 段里多出 `led_ops_gpio / led_ops_pwm` 两张 const 表（每张 12 字节）。每个 LED 实例的 `.bss` 中多 4-8 字节的 `ops` 指针（32 位 4 字节，64 位 8 字节）。
-
-同 10.7 节，本节 platform 层是函数式包装的教学简化版。工业级用 ops 表式，第 16 章演化推导。
+进程的 `.rodata` 段里多出 `led_ops_gpio / led_ops_pwm` 两张 const 表（每张 12 字节）。每个 LED 实例的 `.bss` 中多 4-8 字节的 `ops` 指针（32 位 4 字节，64 位 8 字节）。这一笔账和 PC / STM32 一样，跨平台一致。
 
 ## 10.9 工业代码里的 base + ops 字段
 

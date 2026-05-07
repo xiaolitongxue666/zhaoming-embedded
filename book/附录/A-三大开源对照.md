@@ -305,7 +305,7 @@ DEVICE_DT_INST_DEFINE(idx,
 2. 在 `.device_states` 段塞一个 `struct device` 实例
 3. 把 `&gpio_stm32_driver_api` 链到 `dev->api`
 
-跟工业项目的 `INIT_DEVICE_EXPORT(my_setup)` 加全局 `extern led_base_t *green_led;` 是一回事。差别只在 Zephyr 用编译期模板（多个 `_##idx` 后缀）批量生成实例，更精致。
+跟工业项目的 `INIT_DEVICE_EXPORT(my_setup)` 加全局 `extern struct led_base *green_led;` 是一回事。差别只在 Zephyr 用编译期模板（多个 `_##idx` 后缀）批量生成实例，更精致。
 
 ### A.3.2 Zephyr 设备树：编译期展开式的设备描述
 
@@ -478,7 +478,7 @@ g_signal_connect(button, "clicked",
 | 子类嵌入基类 | `struct led { struct led_base base; ... }` | `struct cdev { struct kobject kobj; ... }` | （字段 + dt 配置组合） | `struct GtkButton { GtkBin parent_instance; ... }` |
 | 向下转型 | `(struct led *)me` 或 `container_of` | `container_of(ptr, struct cdev, kobj)` | （通过 `dev->data`） | `G_TYPE_CHECK_INSTANCE_CAST` |
 | initcall 等级 | INIT_DEVICE_EXPORT 等 7 级 | core/postcore/.../late 7 级 | PRE_KERNEL_1 / POST_KERNEL / APPLICATION | 编译期 + GType 注册时执行 |
-| 注册机制 | `extern led_base_t *green_led;` | `register_chrdev` + `module_init` / `gpiochip_add_data` | `DEVICE_DT_INST_DEFINE` 宏 | `g_type_register_static` |
+| 注册机制 | `extern struct led_base *green_led;` | `register_chrdev` + `module_init` / `gpiochip_add_data` | `DEVICE_DT_INST_DEFINE` 宏 | `g_type_register_static` |
 | 类型检查 | 无（裸强转） | 无（裸强转） | 无（裸强转） | RTTI（`G_TYPE_CHECK_INSTANCE_CAST`） |
 | 事件机制 | 单 cb 字段 | callback / notifier_chain | callback 数组 | signal / property |
 

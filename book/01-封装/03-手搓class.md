@@ -377,7 +377,7 @@ led.on(&red);
 
 ## 3.8 你现在的代码在 STM32 上长什么样
 
-PC 模拟版是 `printf` 假装操作 GPIO。STM32 真实硬件上长这样（节选自 [`oop-in-c/code/03-handwritten-class/stm32-snippet/led_motor_stm32.c`](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/03-handwritten-class/stm32-snippet/led_motor_stm32.c)）：
+PC 模拟版是 `printf` 假装操作 GPIO。STM32 真实硬件上长这样（节选自 [`oop-in-c/code/03-handwritten-class/platform-mcu/stm32/led_motor_stm32.c`](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/03-handwritten-class/platform-mcu/stm32/led_motor_stm32.c)，`pin` 仍是 `PIN_NUM('A', 13)` 编码，详见第 1 章 § 1.x PIN_NUM 编码）：
 
 ```c
 #include "platform.h"
@@ -387,19 +387,19 @@ void platform_gpio_init(uint8_t pin, uint8_t mode)
 {
 	GPIO_InitTypeDef cfg = {0};
 
-	__HAL_RCC_GPIOA_CLK_ENABLE();
+	_enable_port_clock(pin);
 
-	cfg.Pin   = (uint16_t)(1U << pin);
+	cfg.Pin   = PIN_MASK(pin);
 	cfg.Mode  = (mode == GPIO_MODE_OUTPUT) ?
 	            GPIO_MODE_OUTPUT_PP : GPIO_MODE_INPUT;
 	cfg.Pull  = GPIO_NOPULL;
 	cfg.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(GPIOA, &cfg);
+	HAL_GPIO_Init(PIN_PORT(pin), &cfg);
 }
 
 void platform_gpio_write(uint8_t pin, bool value)
 {
-	HAL_GPIO_WritePin(GPIOA, (uint16_t)(1U << pin),
+	HAL_GPIO_WritePin(PIN_PORT(pin), PIN_MASK(pin),
 	                  value ? GPIO_PIN_SET : GPIO_PIN_RESET);
 }
 ```
@@ -412,48 +412,7 @@ void platform_gpio_write(uint8_t pin, bool value)
 
 ## 3.9 你现在的代码在 Linux 用户态长什么样
 
-嵌入式 Linux 端长这样（节选自 [`oop-in-c/code/03-handwritten-class/linux-snippet/led_motor_linux.c`](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/03-handwritten-class/linux-snippet/led_motor_linux.c)）：
-
-```c
-void platform_gpio_init(uint8_t pin, uint8_t mode)
-{
-	int fd = open("/sys/class/gpio/export", O_WRONLY);
-	if (fd >= 0) {
-		dprintf(fd, "%u", (unsigned)pin);
-		close(fd);
-	}
-
-	char path[64];
-	snprintf(path, sizeof(path),
-	         "/sys/class/gpio/gpio%u/direction", (unsigned)pin);
-	fd = open(path, O_WRONLY);
-	if (fd >= 0) {
-		const char *dir = (mode == GPIO_MODE_OUTPUT) ? "out" : "in";
-		write(fd, dir, strlen(dir));
-		close(fd);
-	}
-}
-
-void platform_gpio_write(uint8_t pin, bool value)
-{
-	char path[64];
-	snprintf(path, sizeof(path),
-	         "/sys/class/gpio/gpio%u/value", (unsigned)pin);
-	int fd = open(path, O_WRONLY);
-	if (fd >= 0) {
-		write(fd, value ? "1" : "0", 1);
-		close(fd);
-	}
-}
-```
-
-Linux 把每个 GPIO 暴露成文件 `/sys/class/gpio/gpio13/value`，sysfs 接口。
-
-`led.h` / `led.c` / `motor.h` / `motor.c` / `main.c` 还是一字不改。
-
-新内核推荐 libgpiod，附录 C 会展开。
-
-同样是函数式包装的教学简化版，第 16 章会把 platform 层从函数式升级成 ops 表式（gpio_chip 子系统）。
+Linux 上同款抽象，完整工程见附录 C。
 
 ## 3.10 工业代码里的模块长什么样
 

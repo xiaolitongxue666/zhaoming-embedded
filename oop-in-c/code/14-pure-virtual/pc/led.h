@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 /*
- * led.h - 子类 + ops 表 + 父类统一接口 (本章演示必填 + 选填混合策略)
+ * led.h - led_ops 字段集 + 父类统一接口 (ch14 版, 必填 + 选填混合策略)
+ *
+ * 这一份 led.h 在 ch14 退到"公开接口集中点": 应用层 #include 这一个
+ * 头就拿到 struct led_ops + led_on / led_off / led_set_brightness +
+ * struct led_base. 子类头文件 (led_gpio.h / led_pwm.h) 各自单独一份,
+ * 只在认识硬件的位置 (main.c / board_init.c) include.
  *
  * 这一章在 ch13 的基础上给 ops 表加了 set_brightness 字段. 三个字段
  * 对应三种用法:
@@ -12,9 +17,9 @@
  *                               uint8_t brightness);
  *     };
  *
- * 必填走 assert (见 led.c led_on / led_off), 选填走父类默认行为
- * (见 led.c led_set_brightness). ops 表字段类型本身不变, "必填还是
- * 选填"这条纪律落在父类统一接口里. 子类填了走子类, 没填: 必填的崩,
+ * 必填走 assert (见 led_base.c led_on / led_off), 选填走父类默认行为
+ * (见 led_base.c led_set_brightness). ops 表字段类型本身不变, "必填还
+ * 是选填"这条纪律落在父类统一接口里. 子类填了走子类, 没填: 必填的崩,
  * 选填的走默认.
  *
  * GPIO 子类故意只填 on / off, 不填 set_brightness, 演示选填策略.
@@ -43,26 +48,6 @@ struct led_ops {
 	int (*set_brightness)(struct led_base *me,      /* 选填 */
 	                      uint8_t brightness);
 };
-
-/* GPIO 子类: 只填 on / off, 不支持调光 */
-struct led_gpio {
-	struct led_base base;
-	uint8_t         pin;
-	bool            on_level;
-};
-
-int led_gpio_init(struct led_gpio *me, const char *name,
-                  uint8_t pin, bool on_level);
-
-/* PWM 子类: 三件套全填 */
-struct led_pwm {
-	struct led_base base;
-	uint8_t         channel;
-	uint8_t         duty;
-};
-
-int led_pwm_init(struct led_pwm *me, const char *name,
-                 uint8_t channel, uint8_t duty);
 
 /* ============== 父类统一接口 (必填 + 选填) ==============
  *

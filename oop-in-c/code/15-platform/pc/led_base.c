@@ -14,7 +14,6 @@
  */
 
 #include "led_base.h"
-#include "led.h"
 #include <assert.h>
 #include <stdio.h>
 

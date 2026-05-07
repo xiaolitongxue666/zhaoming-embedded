@@ -42,11 +42,17 @@ CFLAGS_DEFS  = -DMOCK_PC
 
 SRCS_C = mock/main_pc.c \
          mock/pin_board_pc.c \
+         mock/pwm_board_pc.c \
+         mock/i2c_board_pc.c \
          app/platform/platform_assert.c \
          app/platform/platform_pin.c \
+         app/platform/platform_pwm.c \
+         app/platform/platform_i2c.c \
          app/platform/platform_module_export.c \
          app/drivers/led/led_base.c \
          app/drivers/led/led_gpio.c \
+         app/drivers/led/led_pwm.c \
+         app/drivers/led/led_i2c.c \
          app/environment_cfg/led_cfg.c
 SRCS_S =
 
@@ -69,10 +75,16 @@ CFLAGS_DEFS  = -DSTM32F407xx -DUSE_HAL_DRIVER
 SRCS_C = Core/Src/main.c \
          app/platform/platform_assert.c \
          app/platform/platform_pin.c \
+         app/platform/platform_pwm.c \
+         app/platform/platform_i2c.c \
          app/platform/platform_module_export.c \
          app/platform/arch/board/pin_board.c \
+         app/platform/arch/board/pwm_board.c \
+         app/platform/arch/board/i2c_board.c \
          app/drivers/led/led_base.c \
          app/drivers/led/led_gpio.c \
+         app/drivers/led/led_pwm.c \
+         app/drivers/led/led_i2c.c \
          app/environment_cfg/led_cfg.c
 SRCS_S = startup_stm32f407xx.s
 

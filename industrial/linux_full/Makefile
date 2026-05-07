@@ -1,81 +1,57 @@
 # SPDX-License-Identifier: MIT
 #
-# Makefile - Linux 用户态完整工程 (三模 build)
+# Makefile - Linux 用户态完整工程
 #
-# PC 模拟模式 (验证抽象逻辑, 不依赖任何 GPIO):
-#   make MOCK=1
-#   ./build/firmware-pc
+# 单一 build 模式. 依赖 libgpiod-dev 装上:
+#   sudo apt install libgpiod-dev      # Debian / Ubuntu / 树莓派 OS
+#   sudo dnf install libgpiod-devel    # Fedora / RHEL
 #
-# libgpiod 模式 (默认, 现代 Linux 推荐):
-#   sudo apt install libgpiod-dev
+# 编译:
 #   make
+#
+# 真机跑 (需要 GPIO / PWM / I2C 权限, 一般要 sudo 或加 i2c / gpio group):
 #   sudo ./build/firmware
 #
-# sysfs 模式 (退路, 老内核 / 没装 libgpiod 时用):
-#   make BACKEND=sysfs
-#   sudo ./build/firmware
+# 仅 syntax check (Windows / 没 libgpiod-dev 的环境):
+#   make check-syntax
+# 这个 target 用 syntax_stubs/ 下的占位头文件代替 <gpiod.h> / <linux/i2c-dev.h>,
+# 跑 gcc -fsyntax-only 验证 .c 文件语法和头文件依赖是否合法.
 
 TARGET   = firmware
 BUILDDIR = build
-BACKEND ?= libgpiod
 
+# CC 默认 gcc. 用 GNU make 在 Linux 上 cc -> gcc 软链常见, Windows / MSYS2
+# 上没有 cc 软链, 这里强制 gcc 让两边都跑得通. 用别的工具链交叉编译时
+# 命令行覆盖即可: make CC=aarch64-linux-gnu-gcc
 CC       = gcc
-LD       = gcc
-ifeq ($(OS),Windows_NT)
-EXT      = .exe
-else
-EXT      =
-endif
-CFLAGS_DEFS = -DMOCK_PC
+LD       = $(CC)
 
-# Linux 用户态用 GCC ctor 自动注册 INIT_xxx_EXPORT, 跟 PC mock 模式
-# 同一套机制. 这里始终带 -DMOCK_PC 是为了让 platform_module_export.h
-# 选 ctor 分支, 避开 linker section 路径 (Linux 用户态没必要 linker
-# 段). 这是命名上跟 stm32_full 共享 #ifdef 开关的妥协.
-
-ifeq ($(MOCK),1)
-TARGET   = firmware-pc
-SRCS_C   = mock/main_pc.c \
-           mock/pin_board_pc.c \
-           app/platform/platform_assert.c \
-           app/platform/platform_pin.c \
-           app/platform/platform_module_export.c \
-           app/drivers/led/led_base.c \
-           app/drivers/led/led_gpio.c \
-           app/environment_cfg/led_cfg.c
-LIBS     =
-else
-ifeq ($(BACKEND),sysfs)
-PIN_SRC = app/platform/arch/board/pin_sysfs.c
-LIBS    =
-else
-PIN_SRC = app/platform/arch/board/pin_libgpiod.c
-LIBS    = -lgpiod
-endif
-SRCS_C  = src/main.c \
-          $(PIN_SRC) \
-          app/platform/platform_assert.c \
-          app/platform/platform_pin.c \
-          app/platform/platform_module_export.c \
+SRCS    = src/main.c \
           app/drivers/led/led_base.c \
           app/drivers/led/led_gpio.c \
+          app/drivers/led/led_pwm.c \
+          app/drivers/led/led_i2c.c \
           app/environment_cfg/led_cfg.c
-endif
 
-OBJS_C   = $(SRCS_C:%.c=$(BUILDDIR)/%.o)
+OBJS    = $(SRCS:%.c=$(BUILDDIR)/%.o)
 
-INCLUDES = -Iapp -Iapp/platform -Iapp/drivers
+INCLUDES = -Iapp -Iapp/include -Iapp/drivers
+# _POSIX_C_SOURCE=200809L 让 glibc 暴露 sleep / strerror / open / write 等
+# POSIX 接口 (c99 默认隐藏). _DEFAULT_SOURCE 让 <linux/i2c-dev.h> 走得通
+# (i2c_smbus_xxx 系列宏需要 BSD/SVID 段).
 CFLAGS   = -std=c99 -Wall -Wextra -O2 \
+           -D_POSIX_C_SOURCE=200809L -D_DEFAULT_SOURCE \
            -ffunction-sections -fdata-sections \
-           $(INCLUDES) $(CFLAGS_DEFS)
+           $(INCLUDES)
 LDFLAGS  =
+LIBS     = -lgpiod
 
-.PHONY: all clean run
+.PHONY: all clean run check-syntax
 
-all: $(BUILDDIR)/$(TARGET)$(EXT)
+all: $(BUILDDIR)/$(TARGET)
 
-$(BUILDDIR)/$(TARGET)$(EXT): $(OBJS_C) | $(BUILDDIR)
-	$(LD) $(LDFLAGS) -o $@ $(OBJS_C) $(LIBS)
+$(BUILDDIR)/$(TARGET): $(OBJS) | $(BUILDDIR)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 	@ls -la $@
 
 $(BUILDDIR)/%.o: %.c | $(BUILDDIR)
@@ -88,5 +64,20 @@ $(BUILDDIR):
 clean:
 	rm -rf $(BUILDDIR)
 
-run: $(BUILDDIR)/$(TARGET)$(EXT)
-	$(BUILDDIR)/$(TARGET)$(EXT)
+run: $(BUILDDIR)/$(TARGET)
+	sudo $(BUILDDIR)/$(TARGET)
+
+# ---------------- syntax check (no libgpiod-dev needed) ----------------
+# 用 syntax_stubs/ 下的占位 <gpiod.h> / <linux/i2c-dev.h> / <sys/ioctl.h>,
+# 让 .c 文件能在没装 libgpiod-dev / 不在 Linux 上的环境过 -fsyntax-only.
+# 仅做语法 + include 路径合法性检查, 不生成可执行文件.
+check-syntax:
+	@echo "[check-syntax] using syntax_stubs/ (no libgpiod-dev needed)"
+	@for src in $(SRCS); do \
+	  echo "  $$src"; \
+	  $(CC) -std=c99 -Wall -Wextra \
+	    -D_POSIX_C_SOURCE=200809L -D_DEFAULT_SOURCE \
+	    -Iapp -Iapp/include -Iapp/drivers -Isyntax_stubs \
+	    -fsyntax-only $$src || exit 1; \
+	done
+	@echo "[check-syntax] OK"

@@ -2,7 +2,7 @@
 
 第 4 章 [你的全局变量该死了](../../../book/01-封装/04-数据归位.md) 的配套代码。
 
-## 三套实现
+## 目录结构
 
 ```
 04-data-classification/
@@ -11,9 +11,11 @@
 │   ├── led.c           正面教材：数据归位完成形态 + 静态对象池
 │   ├── main.c          Part 1 跑 bad，Part 2 跑 good
 │   └── ...
-├── stm32-snippet/      STM32 HAL 等效片段（不是完整工程，见附录 B）
-└── linux-snippet/      Linux 用户态 sysfs 等效片段（不是完整工程，见附录 C）
+└── platform-mcu/
+    └── stm32/          STM32 真机版（用 PIN_NUM 编码）
 ```
+
+Linux 用户态完整工程见附录 C。
 
 ## 教学要点
 

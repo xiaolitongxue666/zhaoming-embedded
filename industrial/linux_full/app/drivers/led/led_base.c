@@ -1,50 +1,111 @@
 /* SPDX-License-Identifier: MIT */
-/**
-  ******************************************************************************
-  * @file    led_base.c
-  * @brief   Common LED interface, base class dispatch.
-  *
-  * 见附录 C § C.3 + 第 11 章 "多态完整图景".
-  *
-  * 父类层在调用子类 ops 之前三层 platform_assert 收拢参数校验:
-  *   1. me 本身合法
-  *   2. me->ops 已填充
-  *   3. 子类必填的 ops 函数指针 已填充
-  *
-  * 三层校验是工业级硬规则, 防示子类忘填纯虚函数 (第 14 章主题)
-  * 或实例初始化路径出错使 ops 仅部分填充.
-  ******************************************************************************
-  */
+/*
+ * led_base.c - LED 基类 dispatch + 默认实现 (Linux 用户态版本).
+ *
+ * 父类层在调用子类 ops 之前 led_assert 收拢必填项校验:
+ *   1. me 本身合法
+ *   2. me->ops 已填充
+ *   3. 子类必填的 ops 函数指针 已填充
+ *
+ * 三层校验防示子类忘填纯虚函数, 或实例初始化路径出错使 ops 仅部分填充.
+ */
 
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#include "led/led_base.h"
-#include "platform/platform_assert.h"
+#include "drivers/led/led_base.h"
+#include "led_assert.h"
+#include "project_config.h"
 
-/**
-  * @brief  Turn on LED via base ops dispatch.
-  * @param  me  Base this pointer.
-  */
-void led_on(led_base_t *me)
+void led_assert_handler(const char *ex_string, const char *func, int line)
 {
-    platform_assert(me != NULL);
-    platform_assert(me->ops != NULL);
-    platform_assert(me->ops->led_on != NULL);
-
-    me->ops->led_on(me);
+	fprintf(stderr, "[ASSERT] (%s) failed at %s():%d\n",
+	        ex_string, func, line);
+#if (LED_ASSERT_HALT)
+	abort();
+#endif
 }
 
-/**
-  * @brief  Turn off LED via base ops dispatch.
-  * @param  me  Base this pointer.
-  */
-void led_off(led_base_t *me)
+platform_err_t led_base_init(struct led_base *me, const char *name,
+                             const struct led_ops *ops)
 {
-    platform_assert(me != NULL);
-    platform_assert(me->ops != NULL);
-    platform_assert(me->ops->led_off != NULL);
+	platform_err_t ret = PLATFORM_EOK;
 
-    me->ops->led_off(me);
+	if ((NULL == me) || (NULL == name) || (NULL == ops)) {
+		ret = PLATFORM_EINVAL;
+		goto exit;
+	}
+
+	me->ops   = ops;
+	me->name  = name;
+	me->is_on = false;
+
+exit:
+	return ret;
 }
 
-/******************** END OF FILE ********************/
+platform_err_t led_on(struct led_base *me)
+{
+	platform_err_t ret;
+
+	if (NULL == me) {
+		ret = PLATFORM_EINVAL;
+		goto exit;
+	}
+
+	led_assert(me->ops != NULL);
+	led_assert(me->ops->on != NULL);   /* 纯虚必填 */
+
+	ret = me->ops->on(me);
+	if (PLATFORM_EOK == ret) {
+		me->is_on = true;
+	}
+
+exit:
+	return ret;
+}
+
+platform_err_t led_off(struct led_base *me)
+{
+	platform_err_t ret;
+
+	if (NULL == me) {
+		ret = PLATFORM_EINVAL;
+		goto exit;
+	}
+
+	led_assert(me->ops != NULL);
+	led_assert(me->ops->off != NULL);  /* 纯虚必填 */
+
+	ret = me->ops->off(me);
+	if (PLATFORM_EOK == ret) {
+		me->is_on = false;
+	}
+
+exit:
+	return ret;
+}
+
+platform_err_t led_set_brightness(struct led_base *me, uint8_t level)
+{
+	platform_err_t ret;
+
+	if (NULL == me) {
+		ret = PLATFORM_EINVAL;
+		goto exit;
+	}
+
+	led_assert(me->ops != NULL);
+
+	if (NULL == me->ops->set_brightness) {
+		/* 选填: 父类默认 no-op (GPIO LED / I2C 简单 LED 不支持调亮度) */
+		ret = PLATFORM_EOK;
+		goto exit;
+	}
+
+	ret = me->ops->set_brightness(me, level);
+
+exit:
+	return ret;
+}

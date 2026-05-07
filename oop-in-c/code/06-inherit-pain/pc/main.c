@@ -12,7 +12,7 @@
  */
 
 #include <stdio.h>
-#include "led.h"
+#include "led_gpio.h"
 #include "led_pwm.h"
 
 int main(void)
@@ -25,8 +25,8 @@ int main(void)
 	printf("  pin / channel live in their sub-classes.\n");
 	printf("========================================\n\n");
 
-	printf("--- Init led_gpio \"red\" on Pin 13 ---\n");
-	led_gpio_init(&red_led, "red", 13);
+	printf("--- Init led_gpio \"red\" on PA.13 ---\n");
+	led_gpio_init(&red_led, "red", PIN_NUM('A', 13));   /* 0x0D = PA.13 */
 
 	printf("\n--- Init led_pwm \"blue\" on channel 1 ---\n");
 	led_pwm_init(&blue_led, "blue", 1, 70);

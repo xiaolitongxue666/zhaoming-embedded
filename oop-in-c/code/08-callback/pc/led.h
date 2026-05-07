@@ -14,7 +14,7 @@
  *
  * 第三个参数 id 是个通用名: 给 GPIO 当引脚号, 给 PWM 当通道号, 给 I2C
  * 当从机地址. 真实硬件细节 (HAL_GPIO_WritePin / __HAL_TIM_SET_COMPARE
- * / HAL_I2C_Master_Transmit) 见 stm32-snippet 和 linux-snippet, 对函数
+ * / HAL_I2C_Master_Transmit) 完整工程见 ch15 15-platform/, 对函数
  * 指针主线本身没有影响.
  *
  * 所有 on/off 函数签名都是 void name(int param) 一致 -- 这样同一对函数

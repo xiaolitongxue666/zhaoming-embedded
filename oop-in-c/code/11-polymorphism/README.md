@@ -4,7 +4,7 @@
 
 ## 演化点
 
-把 ch10 应用层那行 `me->ops->on(me)` 包装成 `led_on(base)`，写在父类 `led_base.c` 里，所有子类共用。应用层只调 `led_on / led_off / led_toggle`，看不到 ops 字段，也不需要知道这颗 LED 是 GPIO 还是 PWM。
+把 ch10 应用层那行 `me->ops->on(me)` 包装成 `led_on(base)`，写在父类 `led_base.c` 里，所有子类共用。应用层只调 `led_on / led_off / led_toggle`，看不到 ops 字段，也不需要知道这颗 LED 是 GPIO 还是 PWM 还是 I2C。
 
 ```c
 /* 父类统一接口 - 写在 led_base.c, 函数体一行 */
@@ -16,27 +16,31 @@ for (int i = 0; i < 3; ++i)
 	led_on(all_leds[i]);
 ```
 
-红灯落到 `gpio_on`，蓝灯落到 `pwm_on`，绿灯落到 `gpio_on`。同名函数不同行为，这就是多态。
+红灯落到 `gpio_on`，蓝灯落到 `pwm_on`，绿灯落到 `i2c_on`。同名函数不同行为，这就是多态。
 
-## 文件清单
+## 目录
 
 ```
-pc/
-├── Makefile
-├── led_base.h        - 父类字段集 (ops / name / is_on)
-├── led_base.c        - 父类共有 init + 父类统一接口 led_on/off/toggle
-├── led.h             - 子类声明 + ops 表声明
-├── led.c             - 子类 init + 子类实现 (gpio_on / pwm_on / ...)
-└── main.c            - base 指针数组循环演示
-
-stm32-snippet/
-└── led_stm32.c       - 真实 STM32 上的 platform_gpio_* 实现 (HAL)
-
-linux-snippet/
-└── led_linux.c       - 真实 Linux 用户态 platform_gpio_* 实现 (sysfs)
+11-polymorphism/
+├── pc/                          完整可跑 PC 模拟版
+│   ├── Makefile
+│   ├── led_base.h / .c          父类字段集 + 父类统一接口 led_on/off/toggle
+│   ├── led_gpio.h / .c          GPIO 子类 + ops 表
+│   ├── led_pwm.h  / .c          PWM 子类  + ops 表
+│   ├── led_i2c.h  / .c          I2C 子类  + ops 表
+│   └── main.c                   base 指针数组循环演示
+└── platform-mcu/
+    └── stm32/                   STM32 真机版片段（用 PIN_NUM 编码，每个子类一个文件）
+        ├── led_gpio.c           GPIO 子类 + platform_gpio_* (HAL_GPIO_*)
+        ├── led_pwm.c            PWM  子类 (HAL_TIM_PWM_* + __HAL_TIM_SET_COMPARE)
+        └── led_i2c.c            I2C  子类 (HAL_I2C_Master_Transmit)
 ```
 
-`stm32-snippet/` 和 `linux-snippet/` 是参考片段不参与 PC build。共享的 `oop-in-c/code/common/platform.h` + `platform_pc.c` 提供 PC 模拟版的 GPIO 操作。
+`platform-mcu/stm32/` 是参考片段，不参与 PC build。Linux 用户态完整工程见附录 C。
+
+## PIN 编码
+
+`platform-mcu/stm32/led_gpio.c` 用一个 `uint8_t pin` 同时表示 port 和 pin 号，`PIN_NUM('A', 13) = 0x0D`。共享头 `oop-in-c/code/common/platform.h`。pc 版的 GPIO 模拟实现来自 `oop-in-c/code/common/platform_pc.c`，跟 ch01 起一字不变。
 
 ## 编译运行
 

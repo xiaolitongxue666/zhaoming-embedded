@@ -1,14 +1,11 @@
 /* SPDX-License-Identifier: MIT */
-/**
-  ******************************************************************************
-  * @file    project_config.h
-  * @brief   Project-wide compile-time switches.
-  *
-  * 脱敏说明: 这一份是 industrial/stm32_full 教学工程的统一配置头. 工业项目
-  * 里这里通常还有 PLATFORM_HEAP_ENABLE / PLATFORM_OS / log level 之类的开关,
-  * 此处保留最小集合, 其他按需扩展.
-  ******************************************************************************
-  */
+/*
+ * project_config.h - Project-wide compile-time switches.
+ *
+ * 这一份是 industrial/stm32_full 教学工程的统一配置头. 工业项目里这里通常
+ * 还有 PLATFORM_HEAP_ENABLE / PLATFORM_OS / log level 之类的开关, 此处保留
+ * 最小集合, 其他按需扩展.
+ */
 
 #ifndef PROJECT_CONFIG_H
 #define PROJECT_CONFIG_H
@@ -23,5 +20,3 @@
 #define PLATFORM_ASSERT_HALT        1
 
 #endif /* PROJECT_CONFIG_H */
-
-/******************** END OF FILE ********************/

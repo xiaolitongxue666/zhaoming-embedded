@@ -1,15 +1,18 @@
 /* SPDX-License-Identifier: MIT */
 /**
  * @file  led.h
- * @brief LED 父类统一接口 + 三种子类 - 向上转型工程化高潮
+ * @brief LED 父类统一接口 - 向上转型工程化高潮
  *
  * @details
- * 本章 (ch12) 把前面演化好的 ops 表机制放进真实工程结构:
- *   - 父类 struct led_base: 所有 LED 共有字段 (ops + name + is_on),
- *     声明在 led_base.h, 通用 init 在 led_base.c
- *   - 子类 struct led_gpio / led_pwm / led_i2c: 三种硬件实现,
- *     base 嵌在第一个字段, 后面追加各自的硬件资源 (pin / channel /
- *     bus + addr). 父类放共性、硬件字段下沉到子类.
+ * 本章 (ch12) 把前面演化好的 ops 表机制放进真实工程结构. 这一份
+ * led.h 在 ch12 起退到 "公开接口集中点" 的角色: 应用层只 #include
+ * 这一个头文件就拿到 struct led_ops + led_on / led_off + struct
+ * led_base, 不需要碰子类头文件.
+ *
+ * 各子类 (GPIO / PWM / I2C) 单独一对 .h / .c 文件, 子类头文件只在
+ * board_init.c 这种"认识硬件"的位置 include. 这是 Linux 内核和工业
+ * 项目的常见组织方式 -- "每个子类一个文件" 让 git blame 清晰、ABI
+ * 改动定位方便.
  *
  * 关键 ABI 不变量 (见 ch12 § 12.2, C99 § 6.7.2.1):
  *   "结构体第一个成员的地址等于结构体本身的地址."
@@ -42,56 +45,5 @@ struct led_ops {
 /* 应用层入口: 所有调用都走 led_base 句柄 */
 int led_on(struct led_base *me);
 int led_off(struct led_base *me);
-
-/*
- * ------- 子类一: GPIO LED -------
- *
- * 最简单的 LED: 一个 GPIO 引脚拉高 (或拉低) 点亮.
- * base 必须在第一个字段, 后面跟硬件资源.
- *
- * on_level 让同一份 led_gpio 子类支持两种接法: 高电平点亮 (LED
- * 阴极接 GPIO, 阳极接 VCC) / 低电平点亮 (反过来, LED 共阳极).
- * 不用为这两种接法各写一个 led_gpio 子类, 用 bool 字段区分就行.
- */
-struct led_gpio {
-	struct led_base base;       /* 父类, 第 0 字段 (向上转型不变量) */
-	uint8_t         pin;
-	bool            on_level;   /* 1 = 高电平点亮, 0 = 低电平点亮 */
-};
-
-int led_gpio_init(struct led_gpio *me, const char *name,
-                  uint8_t pin, bool on_level);
-
-/*
- * ------- 子类二: PWM LED -------
- *
- * 通过 PWM 占空比驱动. 硬件资源: 一路 PWM 通道 + 当前占空比.
- */
-struct led_pwm {
-	struct led_base base;       /* 父类, 第 0 字段 */
-	uint8_t         channel;
-	uint8_t         duty;
-};
-
-int led_pwm_init(struct led_pwm *me, const char *name,
-                 uint8_t channel, uint8_t duty);
-
-/*
- * ------- 子类三: I2C 扩展芯片 LED -------
- *
- * 走 I2C 总线给某个寄存器写 0/1 控制一颗 LED 亮灭. 硬件资源:
- * 总线编号 + 7-bit 设备地址.
- *
- * 这种结构在工业控制板里很常见 (主控 GPIO 不够用, 挂一颗 PCA9555
- * 之类的 I/O 扩展芯片). 应用层完全不知道, 它只调 led_on(handle).
- */
-struct led_i2c {
-	struct led_base base;       /* 父类, 第 0 字段 */
-	uint8_t         bus;
-	uint8_t         addr;
-};
-
-int led_i2c_init(struct led_i2c *me, const char *name,
-                 uint8_t bus, uint8_t addr);
 
 #endif /* LED_H */

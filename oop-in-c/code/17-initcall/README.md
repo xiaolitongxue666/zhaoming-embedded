@@ -20,3 +20,9 @@ make
 ```
 
 输出会列出 4 个驱动 init 都跑到了，main 一行不动。
+
+## 目录结构
+
+- `pc/` — initcall 机制教学版 (能跑)
+- `platform-mcu/stm32/` — STM32 链接脚本片段 (说明在 README)
+- `linux-driver/` — Linux 内核 initcall 真身路径索引 (说明在 README)

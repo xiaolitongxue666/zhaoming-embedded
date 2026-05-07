@@ -1,19 +1,22 @@
 /* SPDX-License-Identifier: MIT */
 /**
  * @file  led_base.c
- * @brief led_base 通用 init - ops / name / is_on 一次填好
+ * @brief 父类层 -- 共有 init + 父类统一接口 led_on / led_off
  *
  * @details
- * 子类 init (led_gpio_init / led_pwm_init / led_i2c_init) 第一行调
- * led_base_init, 把 "我用哪张 ops 表" 作为常量参数传进来. 父类把
- * ops / name / is_on 三个公共字段一次填好, 之后子类只管自己的硬件
- * 资源 (pin / channel / addr).
+ * 父类做两件事:
+ *   1) led_base_init - 共有字段 init (ops / name / is_on), 子类 init
+ *      第一行调一次, 把"我用哪张 ops 表"作为常量参数传进来. 子类只
+ *      管自己的硬件资源 (pin / channel / addr).
+ *   2) led_on / led_off - 父类统一接口, 函数体一行 me->ops->xxx(me),
+ *      三种子类共用. 应用层只看到 led_on(base), 不直接碰 ops 字段,
+ *      也不需要知道这颗 LED 是 GPIO / PWM / I2C 哪一种.
  *
  * NULL check 都集中在这里. 子类 init 拿到非 0 返回值就把错误码原样
  * 往上抛.
  */
 
-#include "led_base.h"
+#include "led.h"
 #include <stdio.h>
 
 int led_base_init(struct led_base *me, const char *name,
@@ -29,4 +32,28 @@ int led_base_init(struct led_base *me, const char *name,
 	printf("  [base] \"%s\" common init done, ops=%p\n",
 	       name, (const void *)ops);
 	return 0;
+}
+
+/*
+ * 父类统一接口 - 函数体一行, 所有子类共用.
+ *
+ * led_on(base) 内部 me->ops->on(me): 红灯落到 gpio_on, 蓝灯落到
+ * pwm_on, 绿灯落到 i2c_on. 应用层一行 led_on(base) 跑出三种行为.
+ *
+ * NULL 防御一句话挡住三个潜在 NULL 来源 (me / me->ops / me->ops->on),
+ * 任何一个 NULL 就退出. 胶水函数的好处就在这: 所有调用方只看到
+ * led_on 这一个 API, NULL check 集中在这一处.
+ */
+int led_on(struct led_base *me)
+{
+	if (!me || !me->ops || !me->ops->on)
+		return -1;
+	return me->ops->on(me);
+}
+
+int led_off(struct led_base *me)
+{
+	if (!me || !me->ops || !me->ops->off)
+		return -1;
+	return me->ops->off(me);
 }

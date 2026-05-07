@@ -20,3 +20,9 @@ cd pc
 make
 ./demo
 ```
+
+## 目录结构
+
+- `pc/` — 山寨 Linux 内核 gpio_chip 子系统的教学版 (能跑)
+- `platform-mcu/stm32/` — 本章不演示 STM32 (说明在 README)
+- `linux-driver/userspace/` — Linux 用户态 libgpiod 最小例 (应用层视角)

@@ -24,9 +24,9 @@ int main(void)
 	printf("========================================\n\n");
 
 	printf("--- led_init / motor_init: open for business ---\n");
-	led_init(&red, 13);
-	led_init(&green, 14);
-	motor_init(&fan, 5);
+	led_init(&red,   PIN_NUM('A', 13));   /* 0x0D = PA.13 */
+	led_init(&green, PIN_NUM('A', 14));   /* 0x0E = PA.14 */
+	motor_init(&fan, PIN_NUM('A', 5));    /* 0x05 = PA.5  */
 
 	printf("\n--- LED operations ---\n");
 	led_on(&red);

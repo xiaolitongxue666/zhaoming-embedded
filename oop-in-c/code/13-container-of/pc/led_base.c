@@ -1,19 +1,28 @@
 /* SPDX-License-Identifier: MIT */
 /**
  * @file  led_base.c
- * @brief led_base 共有 init 实现 (ch13 版)
+ * @brief 父类层 -- 共有 init + 父类统一接口 led_on / led_off / led_set_brightness (ch13 版)
  *
  * @details
- * 子类的 init (led_gpio_init / led_pwm_init / led_i2c_init) 第一行调
- * led_base_init, 把对应的 const ops 表作为常量传进来. 共有字段
- * (ops / name / is_on) 一次填好, 子类 init 后续只填自己的硬件字段
- * (pin / channel / bus / addr 等).
+ * 父类做两件事:
+ *   1) led_base_init - 共有字段 init (ops / name / is_on), 子类 init
+ *      第一行调一次. 跟 ch10 / ch11 一字不动.
+ *   2) led_on / led_off / led_set_brightness - 父类统一接口, 函数体
+ *      一行 me->ops->xxx(me), 三种子类共用.
  *
- * 跟 ch10/ch11 是完全一样的接口. ch13 这一章的所有变化在 led.c 里
- * (子类实现层用 container_of 而不是强转), led_base.c 一行不动.
+ * led_on / led_off 用 assert 抓"忘填 on / off"的子类: 调试构建里 abort
+ * 把低级错暴露在调试期, Release 构建定义 NDEBUG, assert 整行消失,
+ * 0 运行时开销. 这是 C 模拟"必填"的等价物 (跟 ch14 的"必填策略"对应).
+ *
+ * led_set_brightness 是选填 -- 子类 ops 没填, 父类的统一接口安静返回 0
+ * (这一章先用最简默认, ch14 把"安静默认"展开成完整的选填策略).
+ *
+ * 这一章 (ch13) 所有 container_of 相关变化在子类实现层 (led_gpio.c
+ * 等) 里, 父类层一字不变.
  */
 
-#include "led_base.h"
+#include "led.h"
+#include <assert.h>
 #include <stdio.h>
 
 int led_base_init(struct led_base *me, const char *name,
@@ -29,4 +38,36 @@ int led_base_init(struct led_base *me, const char *name,
 	printf("  [base] \"%s\" common init done, ops=%p\n",
 	       name, (const void *)ops);
 	return 0;
+}
+
+int led_on(struct led_base *me)
+{
+	if (!me)
+		return -1;
+	/* on 是 LED 的核心能力, 子类必须实现. 调试构建里 assert 抓到
+	 * 忘填的子类立刻 abort, Release 构建定义 NDEBUG 后 assert 整行
+	 * 消失, 0 运行时开销. */
+	assert(me->ops && me->ops->on &&
+	       "led_on: subclass must implement on()");
+	return me->ops->on(me);
+}
+
+int led_off(struct led_base *me)
+{
+	if (!me)
+		return -1;
+	assert(me->ops && me->ops->off &&
+	       "led_off: subclass must implement off()");
+	return me->ops->off(me);
+}
+
+int led_set_brightness(struct led_base *me, uint8_t brightness)
+{
+	if (!me || !me->ops)
+		return -1;
+	/* set_brightness 是选填字段, 子类没实现就走父类默认行为
+	 * (这里默认 = 安静返回 0). */
+	if (!me->ops->set_brightness)
+		return 0;
+	return me->ops->set_brightness(me, brightness);
 }

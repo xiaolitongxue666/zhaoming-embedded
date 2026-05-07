@@ -39,11 +39,11 @@ int main(void)
 	printf("  Part 2: GOOD code with struct + static pool\n");
 	printf("========================================\n\n");
 
-	printf("--- led_acquire for red (pin=5) ---\n");
-	struct led *red = led_acquire(5);
+	printf("--- led_acquire for red (PA.5) ---\n");
+	struct led *red = led_acquire(PIN_NUM('A', 5));     /* 0x05 = PA.5 */
 
-	printf("\n--- led_acquire for green (pin=3) ---\n");
-	struct led *green = led_acquire(3);
+	printf("\n--- led_acquire for green (PA.3) ---\n");
+	struct led *green = led_acquire(PIN_NUM('A', 3));   /* 0x03 = PA.3 */
 
 	printf("\n--- Both LEDs are independent ---\n");
 	led_on(red);

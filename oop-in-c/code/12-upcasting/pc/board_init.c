@@ -23,6 +23,10 @@
  */
 
 #include "leds.h"
+#include "led_gpio.h"
+#include "led_pwm.h"
+#include "led_i2c.h"
+#include "platform.h"
 #include <stdio.h>
 
 /*
@@ -61,14 +65,14 @@ int board_init(void)
 	 * base 字段, 再填子类自己的硬件资源.
 	 *
 	 * 三种 LED 三种硬件:
-	 *   GPIO 灯 (ERR)   -> pin = 10, on_level = high
+	 *   GPIO 灯 (ERR)   -> PA.13, on_level = high
 	 *   PWM  灯 (STAT)  -> channel = 1, duty = 50%
 	 *   I2C  灯 (NET)   -> bus = 0, addr = 0x20
 	 *
 	 * 任意一颗 LED 初始化失败, board_init 直接把错误码返回给 main.
 	 * 板级 init 出错时让上层立刻知道, 比让设备半死不活地跑下去要好.
 	 */
-	rc = led_gpio_init(&s_led_err, "ERR", 10, true);
+	rc = led_gpio_init(&s_led_err, "ERR", PIN_NUM('A', 13), true);
 	if (rc != 0) {
 		printf("[board] led_gpio_init(ERR) failed, rc=%d\n", rc);
 		return rc;

@@ -10,8 +10,8 @@
  *
  * 本章不引入 LED 结构, 不引入 platform 抽象, gpio_on / pwm_on /
  * i2c_on 只是 printf 占位, 用来让 fp 能跳到不同地址跑出不同输出.
- * 真实硬件实现 (HAL_GPIO_WritePin / sysfs write) 见 stm32-snippet
- * 和 linux-snippet, 对函数指针主线本身没有影响.
+ * 真实硬件实现 (HAL_GPIO_WritePin / sysfs write) 完整工程见 ch15
+ * 15-platform/, 对函数指针主线本身没有影响.
  *
  * 所有函数签名都是 void (*)(int) 一致 - 这样同一个 fp 能存任何一个,
  * 这是函数指针的硬约束 (类型不一致编译报错). 详见 ch07 § 7.3.

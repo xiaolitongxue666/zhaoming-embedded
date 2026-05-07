@@ -13,7 +13,10 @@
  */
 
 #include "led.h"
+#include "led_gpio.h"
+#include "led_pwm.h"
 #include "sensor.h"
+#include "platform.h"
 #include <stdio.h>
 
 int main(void)
@@ -29,7 +32,7 @@ int main(void)
 	printf("=========================================\n");
 
 	/* 子类 init 把对应的 const ops 表交给 base, 一次填好 */
-	rc = led_gpio_init(&g_led_err, "ERR", 10, true);
+	rc = led_gpio_init(&g_led_err, "ERR", PIN_NUM('A', 13), true);
 	if (rc != 0) {
 		printf("led_gpio_init failed: %d\n", rc);
 		return 1;

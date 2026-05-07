@@ -19,6 +19,22 @@
 #include "led.h"
 #include <stdio.h>
 
+/*
+ * 内部小工具: 把 pin 编码 (高 4 位 port, 低 4 位 num) 拆回 port 字母 + 号,
+ * 让日志里看到 "PA.13" 这种 port + 号的可读形态. 这两个函数和
+ * common/platform_pc.c 里完全一致, 是教学版图 -- 同样的解码逻辑
+ * 在 platform 层有一份, 在 LED 层这里再有一份, 各自只服务自己的 printf.
+ */
+static char led_pin_port(uint8_t pin)
+{
+	return (char)('A' + ((pin >> 4) & 0x0F));
+}
+
+static int led_pin_num(uint8_t pin)
+{
+	return pin & 0x0F;
+}
+
 int led_init(struct led *me, uint8_t pin)
 {
 	if (!me)
@@ -31,7 +47,7 @@ int led_init(struct led *me, uint8_t pin)
 	platform_gpio_init(pin, GPIO_MODE_OUTPUT);
 	platform_gpio_write(pin, false);
 
-	printf("  [LED] Pin%u initialized\n", (unsigned)pin);
+	printf("  [LED] P%c.%d initialized\n", led_pin_port(pin), led_pin_num(pin));
 	return 0;
 }
 
@@ -46,7 +62,7 @@ int led_deinit(struct led *me)
 	me->is_on = false;
 	me->brightness = 0;
 
-	printf("  [LED] Pin%u released\n", (unsigned)me->pin);
+	printf("  [LED] P%c.%d released\n", led_pin_port(me->pin), led_pin_num(me->pin));
 	return 0;
 }
 
@@ -58,7 +74,7 @@ int led_on(struct led *me)
 	me->is_on = true;
 	platform_gpio_write(me->pin, true);
 
-	printf("  [LED] Pin%u ON\n", (unsigned)me->pin);
+	printf("  [LED] P%c.%d ON\n", led_pin_port(me->pin), led_pin_num(me->pin));
 	return 0;
 }
 
@@ -70,7 +86,7 @@ int led_off(struct led *me)
 	me->is_on = false;
 	platform_gpio_write(me->pin, false);
 
-	printf("  [LED] Pin%u OFF\n", (unsigned)me->pin);
+	printf("  [LED] P%c.%d OFF\n", led_pin_port(me->pin), led_pin_num(me->pin));
 	return 0;
 }
 
@@ -112,7 +128,7 @@ int led_set_brightness(struct led *me, uint8_t brightness)
 		platform_gpio_write(me->pin, true);
 	}
 
-	printf("  [LED] Pin%u brightness set to %u%%\n",
-	       (unsigned)me->pin, (unsigned)brightness);
+	printf("  [LED] P%c.%d brightness set to %u%%\n",
+	       led_pin_port(me->pin), led_pin_num(me->pin), (unsigned)brightness);
 	return 0;
 }

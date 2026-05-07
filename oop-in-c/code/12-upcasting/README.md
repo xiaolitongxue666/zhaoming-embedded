@@ -5,21 +5,25 @@
 ## 目录
 
 ```
-pc/                  完整可跑 PC 模拟版
-├── led.h, led.c           父类 led_base + 子类 led_gpio/led_pwm/led_i2c
-├── leds.h                 板级对外暴露的全局句柄
-├── board_init.c           唯一认识硬件的文件
-├── main.c                 应用层（零硬件字样）
-└── Makefile               引用 ../../common/platform_pc.c
+pc/                              完整可跑 PC 模拟版
+├── led_base.h / .c              父类
+├── led_gpio.h / .c              GPIO 子类
+├── led_pwm.h  / .c              PWM 子类
+├── led_i2c.h  / .c              I2C 子类
+├── leds.h                       板级对外暴露的全局句柄
+├── board_init.c                 唯一认识硬件的文件
+├── main.c                       应用层（零硬件字样）
+└── Makefile                     引用 ../../common/platform_pc.c
 
-stm32-snippet/       STM32 HAL 等效片段（替换 platform_pc.c 即可）
-└── led_stm32.c
-
-linux-snippet/       Linux 用户态等效片段（sysfs）
-└── led_linux.c
+platform-mcu/
+└── stm32/                       STM32 真机版片段（用 PIN_NUM 编码，每个子类一个文件）
+    ├── led_gpio.c               GPIO 子类 + platform_gpio_* (HAL_GPIO_*)
+    ├── led_pwm.c                PWM  子类 (HAL_TIM_PWM_* + __HAL_TIM_SET_COMPARE)
+    ├── led_i2c.c                I2C  子类 (HAL_I2C_Master_Transmit)
+    └── board_init.c             STM32 板级 init（pin = PIN_NUM('A', 13)）
 ```
 
-PC 版的 GPIO 模拟实现来自仓库共享的 `oop-in-c/code/common/platform_pc.c`，跟 ch01 起一字不变。
+`platform-mcu/stm32/` 是参考片段，不参与 PC build。Linux 用户态完整工程见附录 C。pc 版的 GPIO 模拟实现来自仓库共享的 `oop-in-c/code/common/platform_pc.c`，跟 ch01 起一字不变。
 
 ## 跑一遍
 

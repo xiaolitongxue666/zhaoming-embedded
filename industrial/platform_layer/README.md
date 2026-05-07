@@ -2,6 +2,18 @@
 
 这一份代码是《C 语言面向对象编程·嵌入式实战》第 19 章 19.6 节、第 20 章 20.6 节正文的配套骨架。
 
+## 这是裸机 STM32 项目专用·跟 Linux 项目无关
+
+这一份 platform 抽象层（platform_pin / platform_pwm / platform_i2c / platform_uart / platform_spi / platform_module_export 等）**只针对裸机 STM32 / 简单 RTOS（FreeRTOS 单纯 kernel）这种没有现成设备模型的环境**。
+
+**Linux 用户态 / Linux 内核态 / Zephyr / RT-Thread / NuttX** 这些环境内核已经把 platform 抽象做完了·应用层再套一层就是过度封装。具体看：
+
+- ch15 §15.15 "什么时候不要 Platform 层"（建立判断标准）
+- ch16 §16.13 "不只是 Linux：Zephyr / RT-Thread 也是同款"（横向扩展）
+- 附录 C §C.0 "为什么这一份工程没有 platform 层"（Linux 用户态实战）
+
+附录 B `industrial/stm32_full/` 是这一层 platform 抽象的"必须自抽"实战；附录 C `industrial/linux_full/` 是"内核做完别再抽"的对照实战·两个工程合起来覆盖工程判断力的完整光谱。
+
 ## 来源
 
 来自工业控制板真实项目。Platform 层是把"换 MCU 不改应用"这件事真正做成的关键：所有驱动只调 `platform_xxx_*` 接口，每家 MCU 的 HAL 差异都在这一层吸收掉。

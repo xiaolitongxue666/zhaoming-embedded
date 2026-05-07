@@ -1,38 +1,99 @@
 /* SPDX-License-Identifier: MIT */
-/**
-  ******************************************************************************
-  * @file    led_base.c
-  * @brief   Common led interface, base class for all led classes.
-  *
-  * @details 见第 19 章 § 19.1. 父类 .c 只做一件事: 把对外 API 转发给子类
-  *          ops 表里的对应函数指针. 这就是第 11 章 "多态完整图景" 推出来的
-  *          vtable 查表 + 间接跳转, 工业代码里一字不差.
-  ******************************************************************************
-  */
+/*
+ * led_base.c - LED 基类 dispatch + 默认实现.
+ *
+ * 父类层在调用子类 ops 之前 assert 收拢必填项校验:
+ *   1. me 本身合法
+ *   2. me->ops 已填充
+ *   3. 子类必填的 ops 函数指针 已填充
+ *
+ * 三层校验防示子类忘填纯虚函数, 或实例初始化路径出错使 ops 仅部分填充.
+ */
 
-/* Includes ------------------------------------------------------------------*/
+#include <stddef.h>
+
 #include "led_base.h"
+#include "platform_assert.h"
 
-/* Exported functions --------------------------------------------------------*/
-
-/**
-  * @brief  turn on led
-  * @param  me - this pointer
-  * @retval none
-  */
-void led_on(led_base_t *me)
+platform_err_t led_base_init(struct led_base *me, const char *name,
+                             const struct led_ops *ops)
 {
-    return me->ops->led_on(me);
+	platform_err_t ret = PLATFORM_EOK;
+
+	if ((NULL == me) || (NULL == name) || (NULL == ops)) {
+		ret = PLATFORM_EINVAL;
+		goto exit;
+	}
+
+	me->ops   = ops;
+	me->name  = name;
+	me->is_on = false;
+
+exit:
+	return ret;
 }
 
-/**
-  * @brief  turn off led
-  * @param  me - this pointer
-  * @retval none
-  */
-void led_off(led_base_t *me)
+platform_err_t led_on(struct led_base *me)
 {
-    return me->ops->led_off(me);
+	platform_err_t ret;
+
+	if (NULL == me) {
+		ret = PLATFORM_EINVAL;
+		goto exit;
+	}
+
+	platform_assert(me->ops != NULL);
+	platform_assert(me->ops->on != NULL);   /* 纯虚必填 */
+
+	ret = me->ops->on(me);
+	if (PLATFORM_EOK == ret) {
+		me->is_on = true;
+	}
+
+exit:
+	return ret;
 }
 
-/******************** END OF FILE ******************END OF FILE****/
+platform_err_t led_off(struct led_base *me)
+{
+	platform_err_t ret;
+
+	if (NULL == me) {
+		ret = PLATFORM_EINVAL;
+		goto exit;
+	}
+
+	platform_assert(me->ops != NULL);
+	platform_assert(me->ops->off != NULL);  /* 纯虚必填 */
+
+	ret = me->ops->off(me);
+	if (PLATFORM_EOK == ret) {
+		me->is_on = false;
+	}
+
+exit:
+	return ret;
+}
+
+platform_err_t led_set_brightness(struct led_base *me, uint8_t level)
+{
+	platform_err_t ret;
+
+	if (NULL == me) {
+		ret = PLATFORM_EINVAL;
+		goto exit;
+	}
+
+	platform_assert(me->ops != NULL);
+
+	if (NULL == me->ops->set_brightness) {
+		/* 选填: 父类默认 no-op (GPIO LED / I2C 简单 LED 不支持调亮度) */
+		ret = PLATFORM_EOK;
+		goto exit;
+	}
+
+	ret = me->ops->set_brightness(me, level);
+
+exit:
+	return ret;
+}

@@ -10,9 +10,25 @@
 
 ## 目录
 
-- `pc/` — 主线 demo（PC 模拟，任何 C99 编译器跑通）
-- `stm32-snippet/led_stm32.c` — STM32 等效片段（函数式包装教学简化版，HAL_GPIO_*）
-- `linux-snippet/led_linux.c` — Linux 用户态等效片段（函数式包装教学简化版，sysfs）
+```
+pc/                              完整可跑 PC 模拟版
+├── led.h                        父类 + 子类声明
+├── led_base.h / .c              父类
+├── led_gpio.h / .c              GPIO 子类（base 在中间）
+├── led_pwm.h  / .c              PWM 子类
+├── led_i2c.h  / .c              I2C 子类
+├── container_of.h               container_of 宏定义
+├── main.c                       offsetof 打印 + 三个子类 toggle
+└── Makefile                     引用 ../../common/platform_pc.c
+
+platform-mcu/
+└── stm32/                       STM32 真机版片段（用 PIN_NUM 编码，每个子类一个文件）
+    ├── led_gpio.c               GPIO 子类（container_of 反推）+ platform_gpio_*
+    ├── led_pwm.c                PWM  子类（container_of 反推） (HAL_TIM_PWM_*)
+    └── led_i2c.c                I2C  子类（container_of 反推） (HAL_I2C_Master_Transmit)
+```
+
+`platform-mcu/stm32/` 是参考片段，不参与 PC build。Linux 用户态完整工程见附录 C。
 
 ch11+ 的 ops 表式 platform 抽象在 ch15 重构展开。
 

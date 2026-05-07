@@ -1,89 +1,67 @@
 /* SPDX-License-Identifier: MIT */
-/**
-  ******************************************************************************
-  * @file    led_gpio.c
-  * @brief   The implementation of led_gpio subclass.
-  *
-  * 见附录 B § B.3 + 第 15 章 "Platform 抽象到底" + 第 12 章 "向上转型".
-  *
-  * 子类只调 platform_pin 封装函数, 永远不直接碰 GPIO 寄存器, 也不
-  * include platform_pin 内部头文件. 跨芯片移植时这一份代码 0 改动.
-  ******************************************************************************
-  */
+/*
+ * led_gpio.c - LED GPIO 子类实现.
+ *
+ * 子类只调 platform_pin 封装函数, 永远不直接碰 GPIO 寄存器, 也不 include
+ * platform_pin 内部头文件. 跨芯片移植时这一份代码 0 改动.
+ */
 
 #include <stddef.h>
 
-#include "led/led_gpio.h"
+#include "drivers/led/led_gpio.h"
 #include "platform/platform_pin.h"
 
-/* ------ ops 子类实现 ---------------------------------------------------- */
-static void _led_gpio_on(led_base_t *me);
-static void _led_gpio_off(led_base_t *me);
+static platform_err_t _led_gpio_on(struct led_base *me);
+static platform_err_t _led_gpio_off(struct led_base *me);
 
-/* 同一个 ops 表给所有 led_gpio 实例共享, const 放 Flash. */
-static const led_base_ops_t _ops =
-{
-    .led_on  = _led_gpio_on,
-    .led_off = _led_gpio_off,
+/* static const ops 表给所有 led_gpio 实例共享, 放 Flash. */
+static const struct led_ops led_gpio_ops = {
+	.on             = _led_gpio_on,
+	.off            = _led_gpio_off,
+	.set_brightness = NULL,    /* GPIO LED 不支持调亮度, 走父类默认 no-op */
 };
 
-/**
-  * @brief  Constructor.
-  * @param  me           This pointer.
-  * @param  pin_name     Platform pin name (eg "PA.5", "PD.12").
-  * @param  light_level  Output level when LED is on.
-  * @retval See platform_err_t.
-  */
-platform_err_t led_gpio_init(
-    led_gpio_t *me, const char *pin_name, bool light_level)
+platform_err_t led_gpio_init(struct led_gpio *me, const char *name,
+                             const char *pin_name, bool active_high)
 {
-    platform_err_t ret = PLATFORM_EOK;
-    int32_t pin_num;
+	platform_err_t ret;
+	int32_t        pin;
 
-    if ((NULL == me) || (NULL == pin_name))
-    {
-        ret = PLATFORM_EINVAL;
-        goto exit;
-    }
+	if ((NULL == me) || (NULL == pin_name)) {
+		ret = PLATFORM_EINVAL;
+		goto exit;
+	}
 
-    pin_num = platform_pin_get(pin_name);
-    if (pin_num < 0)
-    {
-        ret = PLATFORM_EINVAL;
-        goto exit;
-    }
+	pin = platform_pin_get(pin_name);
+	if (pin < 0) {
+		ret = PLATFORM_EINVAL;
+		goto exit;
+	}
 
-    platform_pin_mode(pin_num, PIN_MODE_OUTPUT);
-    platform_pin_write(pin_num, !light_level);
+	platform_pin_mode(pin, PIN_MODE_OUTPUT);
+	platform_pin_write(pin, active_high ? PIN_LOW : PIN_HIGH);
 
-    me->pin_num     = pin_num;
-    me->light_level = light_level;
-    me->base.ops    = (led_base_ops_t *)&_ops;
+	me->pin         = pin;
+	me->active_high = active_high;
+
+	ret = led_base_init(&me->base, name, &led_gpio_ops);
 
 exit:
-    return ret;
+	return ret;
 }
 
-/* ------ private ops --------------------------------------------------- */
-
-/**
-  * @brief  Turn on the LED.
-  * @param  me  Base this pointer.
-  */
-static void _led_gpio_on(led_base_t *me)
+static platform_err_t _led_gpio_on(struct led_base *me)
 {
-    led_gpio_t *self = (led_gpio_t *)me;
-    platform_pin_write(self->pin_num, self->light_level);
+	struct led_gpio *gpio = (struct led_gpio *)me;
+
+	platform_pin_write(gpio->pin, gpio->active_high ? PIN_HIGH : PIN_LOW);
+	return PLATFORM_EOK;
 }
 
-/**
-  * @brief  Turn off the LED.
-  * @param  me  Base this pointer.
-  */
-static void _led_gpio_off(led_base_t *me)
+static platform_err_t _led_gpio_off(struct led_base *me)
 {
-    led_gpio_t *self = (led_gpio_t *)me;
-    platform_pin_write(self->pin_num, !self->light_level);
-}
+	struct led_gpio *gpio = (struct led_gpio *)me;
 
-/******************** END OF FILE ********************/
+	platform_pin_write(gpio->pin, gpio->active_high ? PIN_LOW : PIN_HIGH);
+	return PLATFORM_EOK;
+}

@@ -1,15 +1,18 @@
-# industrial · 完整工程
+# industrial · 工业代码
 
-这本书附录 B / C 配套的完整工业级工程，跑通 ch01-ch17 所有 OOP 抽象。
+这一份目录包含两类内容：第 19 / 20 章的工业项目接口骨架（来自真实工业控制板，脱敏后保留 OOP 抽象层），以及附录 B / C 的完整可 build 工程。
 
-| 目录 | 对应 | 平台 | 状态 |
+| 目录 | 对应章节 | 平台 / 角色 | 状态 |
 |---|---|---|---|
-| `stm32_full/` | 附录 B | STM32F407 / Cortex-M4F · CubeMX HAL | PC mock 跑通；真机依赖 CubeMX 生成的 HAL 库 |
-| `linux_full/` | 附录 C | ARM64 SBC（树莓派 / 香橙派）· 用户态 | 计划 |
+| `led_basic/` | ch19 § 19.1 | 工业项目 LED 驱动最小继承范例（接口骨架，不直接 build） | 完成 |
+| `motor_24vfuncs/` | ch20 § 20.1 - 20.4 | 水平 / 垂直电机驱动 24 + 3 虚方法（接口骨架） | 完成 |
+| `platform_layer/` | ch19 § 19.6 + ch20 § 20.6 | UART / I²C / SPI / PWM 统一抽象 + 7 级 initcall + 第 8 级单测段 | 完成 |
+| `stm32_full/` | 附录 B | STM32F407 / Cortex-M4F · CubeMX HAL（完整工程） | PC mock 跑通；真机依赖 CubeMX 生成的 HAL 库 |
+| `linux_full/` | 附录 C | ARM64 SBC（树莓派 / 香橙派）· 用户态（完整工程） | PC mock + libgpiod + sysfs 三模 build 跑通 |
 
 ## 跟 oop-in-c/ 教学代码的关系
 
-`oop-in-c/code/<chapter>/` 是教学版（小、清晰、聚焦每章一个概念）。`industrial/` 是工业版（多文件分层、跨编译器宏、`platform_err_t` 错误码、8 级 initcall、`platform_assert` 校验、Doxygen 注释）。
+`oop-in-c/code/<chapter>/` 是教学版（小、清晰、聚焦每章一个概念）。`industrial/` 是工业版（多文件分层、跨编译器宏、`platform_err_t` 错误码、7 级 initcall + 第 8 级单测段、`platform_assert` 校验、Doxygen 注释）。
 
 两者抽象同构：教学版每一招（struct + me / static + 不透明指针 / 函数指针 / ops 表 / vptr / container_of / ...）在工业版里都有对应位置，附录 B § B.5 / 附录 C § C.5 给出全表对应。
 
@@ -27,8 +30,8 @@
 
 - **跨编译器**（ARMCC / IAR / GCC）的 attribute 宏统一在 `platform_def.h`
 - **错误码** `platform_err_t` 全工程统一，`goto exit` 风格收拢错误处理
-- **8 级 initcall** (`INIT_BOARD_EXPORT` 到 `UNIT_TEST_EXPORT`)，启动期自动跑
-- **三层信息可见性**：应用层只见 `led_base_t *`、驱动层见子类完整类型、平台层见 ops 表
+- **7 级 initcall + 第 8 级单测段** (`INIT_BOARD_EXPORT` 到 `INIT_SYSTEM_READY_EXPORT` 走 `platform_module_export_exec()`，`UNIT_TEST_EXPORT` 走独立的 `platform_unit_test_exec()`)，启动期 1-7 级自动跑
+- **三层信息可见性**：应用层只见 `struct led_base *`、驱动层见子类完整类型、平台层见 ops 表
 - **PIN 字符串名解析**（`"PA.5"` / `"PD.12"` / `"PI.14"`）让上层永远不碰寄存器
 - **`platform_assert`** 工业级运行时校验
 

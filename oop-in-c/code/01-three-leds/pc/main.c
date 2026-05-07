@@ -14,9 +14,9 @@
 
 int main(void)
 {
-	struct led red_led;     /* 红灯 - Pin 13 */
-	struct led green_led;   /* 绿灯 - Pin 14 */
-	struct led blue_led;    /* 蓝灯 - Pin 15 */
+	struct led red_led;     /* 红灯 - PA.13 */
+	struct led green_led;   /* 绿灯 - PA.14 */
+	struct led blue_led;    /* 蓝灯 - PA.15 */
 
 	printf("========================================\n");
 	printf("  Three LEDs, one set of code.\n");
@@ -24,9 +24,9 @@ int main(void)
 	printf("========================================\n\n");
 
 	printf("--- Init ---\n");
-	led_init(&red_led, 13);
-	led_init(&green_led, 14);
-	led_init(&blue_led, 15);
+	led_init(&red_led,   PIN_NUM('A', 13));   /* 0x0D = PA.13 */
+	led_init(&green_led, PIN_NUM('A', 14));   /* 0x0E = PA.14 */
+	led_init(&blue_led,  PIN_NUM('A', 15));   /* 0x0F = PA.15 */
 
 	printf("\n--- Turn on RED ---\n");
 	led_on(&red_led);

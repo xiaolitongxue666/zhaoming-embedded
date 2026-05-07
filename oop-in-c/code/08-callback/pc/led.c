@@ -5,7 +5,7 @@
  *
  * @details
  * 六个 on/off 都是 printf 占位, 用来让 test_led 内部"拨号"时跑出
- * 不同输出. 真实硬件操作见 stm32-snippet / linux-snippet, 主线
+ * 不同输出. 真实硬件操作完整工程见 ch15 15-platform/, 主线
  * 不依赖具体硬件.
  *
  * test_led 自己不知道调谁, 调用方告诉它. 函数指针的本质是延迟决定,

@@ -1,84 +1,86 @@
 /* SPDX-License-Identifier: MIT */
-/**
-  ******************************************************************************
-  * @file    main.c
-  * @brief   Linux 用户态主程序 (流水灯).
-  *
-  * 见附录 C § C.3 + 第 16 章 "Linux 不难" + 第 15 章 "Platform 抽象到底".
-  *
-  * 启动流程:
-  *   1. ELF loader 跑完所有 __attribute__((constructor(N))) 注册项
-  *      (platform_pin_register / led_cfg / 其他 INIT_xxx_EXPORT 全部在
-  *      main 之前已经跑过)
-  *   2. main 调 platform_module_export_exec() 是 nop (兼容形式跟 stm32_full 一致)
-  *   3. 进入应用主循环
-  *
-  * 应用层调用 led_on / led_off 一字不知 platform 是 libgpiod 还是 sysfs.
-  * 切换 platform 子类只换链接的 .c 文件 (Makefile 的 BACKEND 变量).
-  ******************************************************************************
-  */
+/*
+ * main.c - Linux 用户态主程序 (3 子类混搭演示).
+ *
+ * 启动流程:
+ *   1. main 调 environment_init() 装配 4 颗 LED 实例
+ *      (gpiod_chip_open + gpiod_line_request_output + sysfs PWM export +
+ *       open i2c-N + ioctl(I2C_SLAVE))
+ *   2. 主循环跑 3 圈, 每圈走一遍 4 个句柄: on -> set_brightness -> sleep -> off
+ *   3. environment_exit() 释放 line / fd / chip
+ *
+ * 应用层调用 led_on / led_off / led_set_brightness 一字不知底下是 libgpiod /
+ * sysfs PWM / i2c-dev. OOP 抽象 (struct led_base + 多子类多态 + 设备句柄统
+ * 一导出) 在 Linux 用户态仍然有用 -- 它解决"应用层不知道下层硬件细节". 但
+ * platform 抽象层只在没有现成设备模型的环境才有价值, 在 Linux 上是反工程,
+ * 这个工程已经把它去掉了.
+ */
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stddef.h>
-#include <unistd.h>
 #include <signal.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <unistd.h>
 
-#include "led/led_base.h"
-#include "platform/platform_module_export.h"
+#include "drivers/led/led_base.h"
+#include "environment_cfg/environment_export.h"
 
-extern led_base_t *led_green;
-extern led_base_t *led_orange;
-extern led_base_t *led_red;
-extern led_base_t *led_blue;
+#define DEMO_ROUNDS    3
 
 static volatile int _g_running = 1;
 
 static void _on_sigint(int sig)
 {
-    (void)sig;
-    _g_running = 0;
+	(void)sig;
+	_g_running = 0;
 }
 
 int main(void)
 {
-    led_base_t *all[4];
-    uint32_t cur = 0;
+	struct led_base *all[4];
+	int              ret;
+	int              round;
+	int              i;
 
-    signal(SIGINT,  _on_sigint);
-    signal(SIGTERM, _on_sigint);
+	signal(SIGINT,  _on_sigint);
+	signal(SIGTERM, _on_sigint);
 
-    printf("=========================================\n");
-    printf("  linux_full: 4 LED running light\n");
-    printf("=========================================\n");
+	printf("=========================================\n");
+	printf("  linux_full: 4 LED demo\n");
+	printf("  GPIO + PWM + I2C 三种子类混搭\n");
+	printf("=========================================\n");
 
-    platform_module_export_exec();   /* 真机这里 nop, ctor 已跑完 */
+	ret = environment_init();
+	if (ret != 0) {
+		fprintf(stderr, "[main] environment_init failed, exit.\n");
+		return 1;
+	}
 
-    if ((NULL == led_green)  || (NULL == led_orange) ||
-        (NULL == led_red)    || (NULL == led_blue)) {
-        fprintf(stderr, "[main] LED handles not ready, exit.\n");
-        return -1;
-    }
+	all[0] = led_status;
+	all[1] = led_dimmer;
+	all[2] = led_panel;
+	all[3] = led_alarm;
 
-    all[0] = led_green;
-    all[1] = led_orange;
-    all[2] = led_red;
-    all[3] = led_blue;
+	for (round = 0; (round < DEMO_ROUNDS) && _g_running; round++) {
+		printf("\n--- round %d ---\n", round);
+		for (i = 0; (i < 4) && _g_running; i++) {
+			printf("[app] led_on(%s)\n", all[i]->name);
+			(void)led_on(all[i]);
+			(void)led_set_brightness(all[i], 128);
+			sleep(1);
+			printf("[app] led_off(%s)\n", all[i]->name);
+			(void)led_off(all[i]);
+		}
+	}
 
-    while (_g_running) {
-        for (uint32_t i = 0; i < 4; i++) {
-            led_off(all[i]);
-        }
-        led_on(all[cur]);
-        cur = (cur + 1) % 4;
-        sleep(1);
-    }
+	printf("\n[main] cleaning up\n");
+	for (i = 0; i < 4; i++) {
+		(void)led_off(all[i]);
+	}
+	environment_exit();
 
-    printf("\n[main] caught signal, cleaning up.\n");
-    for (uint32_t i = 0; i < 4; i++) {
-        led_off(all[i]);
-    }
-    return 0;
+	printf("=========================================\n");
+	printf("  done\n");
+	printf("=========================================\n");
+	return 0;
 }
-
-/******************** END OF FILE ********************/

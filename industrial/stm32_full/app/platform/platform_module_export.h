@@ -1,48 +1,39 @@
 /* SPDX-License-Identifier: MIT */
-/**
-  ******************************************************************************
-  * @file    platform_module_export.h
-  * @brief   Header file of multi-level init mechanism.
-  *
-  * 见第 17 章 "initcall" + 第 19 章 § 19.3 "initcall 7 级" + 附录 B § B.5.
-  *
-  * 8 级初始化机制 (跟 RT-Thread INIT_xxx_EXPORT 同款). 编译期通过
-  * __attribute__((section)) 把每个注册项排进对应的 ELF 段, 启动期
-  * platform_module_export_exec() 顺序遍历 1-7 级跑完, 第 8 级 (UNIT_TEST)
-  * 单独由 platform_unit_test_exec() 跑.
-  *
-  * 7 级语义:
-  *   1 BOARD       板级 (时钟 / GPIO clock)
-  *   2 PREV        软件预初始化
-  *   3 DEVICE      设备驱动 (uart/i2c/spi/pin)
-  *   4 COMPONENT   组件 (log / shell / FS)
-  *   5 ENV         环境配置 (LED 实例配置 / 设备绑定)
-  *   6 APP         应用任务
-  *   7 SYSTEM_READY 系统就绪
-  *
-  * 跨编译器 (ARMCC / IAR / GCC) 都支持. 真机版用 linker 段, PC mock 版用
-  * GCC __attribute__((constructor(N))) 在 main 之前自动跑.
-  ******************************************************************************
-  */
+/*
+ * platform_module_export.h - 8 级 initcall 注册机制
+ *
+ * 编译期通过 __attribute__((section)) 把每个注册项排进对应的 ELF 段,
+ * 启动期 platform_module_export_exec() 顺序遍历 1-7 级跑完, 第 8 级
+ * UNIT_TEST 单独由 platform_unit_test_exec() 跑.
+ *
+ *   1 BOARD       板级 (时钟 / GPIO clock)
+ *   2 PREV        软件预初始化
+ *   3 DEVICE      设备驱动 (uart / i2c / spi / pin)
+ *   4 COMPONENT   组件 (log / shell / FS)
+ *   5 ENV         环境配置 (LED 实例配置 / 设备绑定)
+ *   6 APP         应用任务
+ *   7 SYSTEM_READY 系统就绪
+ *   8 UNIT_TEST   单元测试
+ *
+ * 真机版用 linker 段, PC mock 版用 GCC __attribute__((constructor(N)))
+ * 在 main 之前自动跑.
+ */
 
 #ifndef PLATFORM_API_MODULE_EXPORT_H_
 #define PLATFORM_API_MODULE_EXPORT_H_
 
-#include "stdint.h"
+#include <stdint.h>
 
-typedef struct
-{
-    void (*func)(void);
-} module_export_t;
+struct module_export {
+	void (*func)(void);
+};
 
-/* ============================================================ */
 #ifdef MOCK_PC
 
-/* ---- PC mock: 用 GCC ctor 直接在 main 之前注册自动调用 ---- */
-
+/* PC mock: GCC ctor 在 main 之前自动跑 */
 #define _PLATFORM_INIT_CTOR(_func, _prio)                            \
-    __attribute__((constructor(_prio)))                              \
-    static void _func##_module_init_ctor(void) { _func(); }
+	__attribute__((constructor(_prio)))                              \
+	static void _func##_module_init_ctor(void) { _func(); }
 
 #define INIT_BOARD_EXPORT(fn)            _PLATFORM_INIT_CTOR(fn, 101)
 #define INIT_PREV_EXPORT(fn)             _PLATFORM_INIT_CTOR(fn, 102)
@@ -53,7 +44,6 @@ typedef struct
 #define INIT_SYSTEM_READY_EXPORT(fn)     _PLATFORM_INIT_CTOR(fn, 107)
 #define UNIT_TEST_EXPORT(fn)             _PLATFORM_INIT_CTOR(fn, 108)
 
-/* ============================================================ */
 #else  /* ! MOCK_PC: 真机三大编译器 */
 
 #ifndef MODULE_EXPORT_SECTION
@@ -81,11 +71,11 @@ typedef struct
 #endif
 
 #define INIT_EXPORT(_func, level)                                   \
-            MODULE_EXPORT_USED const module_export_t                \
-            module_init_##_func MODULE_EXPORT_SECTION("moduleExport" level) = \
-            {                                                       \
-                .func = _func,                                      \
-            }
+	MODULE_EXPORT_USED const struct module_export                   \
+	module_init_##_func MODULE_EXPORT_SECTION("moduleExport" level) = \
+	{                                                               \
+		.func = _func,                                              \
+	}
 
 #define INIT_BOARD_EXPORT(fn)            INIT_EXPORT(fn, "1")
 #define INIT_PREV_EXPORT(fn)             INIT_EXPORT(fn, "2")
@@ -102,5 +92,3 @@ extern void platform_module_export_exec(void);
 extern void platform_unit_test_exec(void);
 
 #endif /* PLATFORM_API_MODULE_EXPORT_H_ */
-
-/******************** END OF FILE ********************/

@@ -163,13 +163,13 @@ typedef struct
 
 
 /* ============================================================ *
- *  模块 1：协议层 —— ASCII 帧组装、阻塞读响应、寄存器读写       *
+ *  模块 1：协议层 - ASCII 帧组装、阻塞读响应、寄存器读写       *
  * ============================================================ */
 
 /* 字节流喂帧解析器。两字节间隔 > 30ms 就丢掉之前累积的字节
  * 重新开包；遇到 \r 就把当前累积的字节当成一帧丢进 rx_queue。
  * 在 rx_thread 上下文里被调，每个收到的字节调一次。 */
-static void packet_parser_input(h_motor_acm_t *me, uint8_t data)
+static void packet_parser_input(struct h_motor_acm *me, uint8_t data)
 {
     rx_data_t rx_data;
     
@@ -197,12 +197,12 @@ exit:
     return;
 }
 
-static void rcv_queue_reset(h_motor_acm_t *me)
+static void rcv_queue_reset(struct h_motor_acm *me)
 {
     osMessageQueueReset(me->rx_queue);
 }
 
-static platform_err_t set_cmd_rcv(h_motor_acm_t *me)
+static platform_err_t set_cmd_rcv(struct h_motor_acm *me)
 {
     platform_err_t ret = PLATFORM_EOK;
     rx_data_t rx_data;
@@ -224,7 +224,7 @@ exit:
     return ret;
 }
 
-static platform_err_t get_cmd_u32_rcv(h_motor_acm_t *me, uint32_t *data)
+static platform_err_t get_cmd_u32_rcv(struct h_motor_acm *me, uint32_t *data)
 {
     platform_err_t ret = PLATFORM_EOK;
     rx_data_t rx_data;
@@ -247,7 +247,7 @@ exit:
     return ret;
 }
 
-static platform_err_t get_cmd_u32_packet_send(h_motor_acm_t *me, 
+static platform_err_t get_cmd_u32_packet_send(struct h_motor_acm *me, 
                                 char *str, uint32_t len, uint32_t *data)
 {
     platform_err_t ret = PLATFORM_EOK;
@@ -264,7 +264,7 @@ static platform_err_t get_cmd_u32_packet_send(h_motor_acm_t *me,
     return ret;
 }
 
-static platform_err_t get_cmd_s32_rcv(h_motor_acm_t *me, int32_t *data)
+static platform_err_t get_cmd_s32_rcv(struct h_motor_acm *me, int32_t *data)
 {
     platform_err_t ret = PLATFORM_EOK;
     rx_data_t rx_data;
@@ -289,7 +289,7 @@ exit:
     return ret;
 }
 
-static platform_err_t get_cmd_s32_packet_send(h_motor_acm_t *me, 
+static platform_err_t get_cmd_s32_packet_send(struct h_motor_acm *me, 
                                 char *str, uint32_t len, int32_t *data)
 {
     platform_err_t ret = PLATFORM_EOK;
@@ -306,7 +306,7 @@ static platform_err_t get_cmd_s32_packet_send(h_motor_acm_t *me,
     return ret;
 }
 
-static platform_err_t set_cmd_packet_send(h_motor_acm_t *me, char *str, uint32_t len)
+static platform_err_t set_cmd_packet_send(struct h_motor_acm *me, char *str, uint32_t len)
 {
     platform_err_t ret = PLATFORM_EOK;
     
@@ -322,7 +322,7 @@ static platform_err_t set_cmd_packet_send(h_motor_acm_t *me, char *str, uint32_t
     return ret;
 }
 
-static void  err_cb_check(h_motor_acm_t *me, platform_err_t ret)
+static void  err_cb_check(struct h_motor_acm *me, platform_err_t ret)
 {
     if (PLATFORM_EOK != ret)
     {
@@ -343,7 +343,7 @@ static void  err_cb_check(h_motor_acm_t *me, platform_err_t ret)
     }
 }
 
-static platform_err_t u32_reg_set(h_motor_acm_t *me,
+static platform_err_t u32_reg_set(struct h_motor_acm *me,
                                    uint16_t reg_addr,
                                    uint32_t data)
 {
@@ -357,7 +357,7 @@ static platform_err_t u32_reg_set(h_motor_acm_t *me,
     return ret;
 }
 
-static platform_err_t s32_reg_set(h_motor_acm_t *me,
+static platform_err_t s32_reg_set(struct h_motor_acm *me,
                                    uint16_t reg_addr,
                                    int32_t data)
 {
@@ -371,7 +371,7 @@ static platform_err_t s32_reg_set(h_motor_acm_t *me,
     return ret;
 }
 
-static platform_err_t t_cmd_set(h_motor_acm_t *me, uint32_t cmd_id)
+static platform_err_t t_cmd_set(struct h_motor_acm *me, uint32_t cmd_id)
 {
     platform_err_t ret;
     char str[30];
@@ -382,7 +382,7 @@ static platform_err_t t_cmd_set(h_motor_acm_t *me, uint32_t cmd_id)
     return ret;
 }
 
-static platform_err_t u32_reg_get(h_motor_acm_t *me,
+static platform_err_t u32_reg_get(struct h_motor_acm *me,
                                    uint16_t reg_addr,
                                    uint32_t *data)
 {
@@ -395,7 +395,7 @@ static platform_err_t u32_reg_get(h_motor_acm_t *me,
     return ret;
 }
 
-static platform_err_t s32_reg_get(h_motor_acm_t *me,
+static platform_err_t s32_reg_get(struct h_motor_acm *me,
                                    uint16_t reg_addr,
                                    int32_t *data)
 {
@@ -409,14 +409,14 @@ static platform_err_t s32_reg_get(h_motor_acm_t *me,
 }
 
 /* ============================================================ *
- *  模块 2：接收线程 —— 从 UART 阻塞读字节，喂给协议解析器       *
+ *  模块 2：接收线程 - 从 UART 阻塞读字节，喂给协议解析器       *
  * ============================================================ */
 /* 独立线程的好处：work_thread 在等响应（osMessageQueueGet
  * rx_queue）时，rx_thread 仍能继续读 UART 把字节喂给解析器，
  * 不会因为命令处理阻塞导致丢字节。 */
 static void rx_thread(void *argument)
 {
-    h_motor_acm_t *me = argument;
+    struct h_motor_acm *me = argument;
     uint8_t data[RX_DATA_SIZE_MAX];
 
     for (;;)
@@ -436,7 +436,7 @@ static void rx_thread(void *argument)
 uint8_t fault_detect_pin_level_get(uint8_t id, void* args)
 {
     (void)id;
-    h_motor_acm_t *me = args;
+    struct h_motor_acm *me = args;
     return platform_pin_read(me->fault_detect_pin);
 }
 
@@ -445,8 +445,8 @@ static void acm_work_queue_put(struct h_motor_base *me,
 
 void fault_btn_cb(void* args)
 {
-    h_motor_acm_t *me = container_of(
-        args, h_motor_acm_t, fault_detect_btn);
+    struct h_motor_acm *me = container_of(
+        args, struct h_motor_acm, fault_detect_btn);
     Button *btn = args;
     PressEvent event = get_button_event(btn);
     if (event == PRESS_DOWN)
@@ -465,12 +465,12 @@ void fault_btn_cb(void* args)
     }
 }
 
-static int32_t mm_to_cnt(h_motor_acm_t *me, double mm)
+static int32_t mm_to_cnt(struct h_motor_acm *me, double mm)
 {
     return (int32_t)round(mm * me->encoder_cnt_per_mm);
 }
 
-static double cnt_to_mm(h_motor_acm_t *me, int32_t cnt)
+static double cnt_to_mm(struct h_motor_acm *me, int32_t cnt)
 {
     return (double)cnt / me->encoder_cnt_per_mm;
 }
@@ -478,7 +478,7 @@ static double cnt_to_mm(h_motor_acm_t *me, int32_t cnt)
 static void acm_work_queue_put(struct h_motor_base *me, acm_work_t *work)
 {   
     osStatus_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     status = osMessageQueuePut(acm->work_queue, work, 0, 0);
     if (status != osOK)
     {
@@ -492,7 +492,7 @@ static void acm_work_queue_put(struct h_motor_base *me, acm_work_t *work)
 static void _motor_stop(struct h_motor_base *me)
 {
     platform_err_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     status = t_cmd_set(acm, 0);
 
 #if H_MOTOR_ACM_DEBUG
@@ -524,7 +524,7 @@ static void motor_stop(struct h_motor_base *me)
 static void _motor_start(struct h_motor_base *me)
 {
     platform_err_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     status = t_cmd_set(acm, 1);
     err_cb_check(acm, status);
 }
@@ -537,12 +537,12 @@ static void motor_start(struct h_motor_base *me)
     acm_work_queue_put(me, &work);
 }
 
-static void _move_velocity_mode(struct h_motor_base *me, h_motor_base_move_dir_t dir)
+static void _move_velocity_mode(struct h_motor_base *me, enum h_motor_base_move_dir dir)
 {
     int32_t data;
     platform_err_t status;
     
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     status = u32_reg_set(acm, 0xc8, 2);
     
     if(H_MOTOR_MOVE_POSITIVE == dir)
@@ -558,7 +558,7 @@ static void _move_velocity_mode(struct h_motor_base *me, h_motor_base_move_dir_t
     err_cb_check(acm, status);
 }
 
-static void move_velocity_mode(struct h_motor_base *me, h_motor_base_move_dir_t dir)
+static void move_velocity_mode(struct h_motor_base *me, enum h_motor_base_move_dir dir)
 {
     acm_work_t work;
     
@@ -570,7 +570,7 @@ static void move_velocity_mode(struct h_motor_base *me, h_motor_base_move_dir_t 
 static void _move_relative_mode(struct h_motor_base *me, double move_mm)
 {
     platform_err_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
 
     status = u32_reg_set(acm, 0xc8, 256);
     status = status || s32_reg_set(acm, 0xca, mm_to_cnt(acm, move_mm));
@@ -591,7 +591,7 @@ static void move_relative_mode(struct h_motor_base *me, double move_mm)
 static void _move_absolute_mode(struct h_motor_base *me, double pos_mm)
 {
     platform_err_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
 
     status = u32_reg_set(acm, 0xc8, 0);
     status = status || s32_reg_set(acm, 0xca, mm_to_cnt(acm, pos_mm));
@@ -612,7 +612,7 @@ static platform_err_t status_read(struct h_motor_base *me)
 {
     platform_err_t status;
     uint32_t data;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     status = u32_reg_get(acm, 0xc9, &data);
     if (PLATFORM_EOK == status)
     {
@@ -627,7 +627,7 @@ static platform_err_t status_read(struct h_motor_base *me)
 static void _velocity_set(struct h_motor_base *me, int32_t velocity)
 {
     platform_err_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     status = s32_reg_set(acm, 0xcb, mm_to_cnt(acm, velocity) * 10);
     status = status || status_read(me);
     if (acm->status.is_in_motion && PLATFORM_EOK == status)
@@ -650,7 +650,7 @@ static void velocity_set(struct h_motor_base *me, int32_t velocity)
 static void _acce_dece_set(struct h_motor_base *me, uint32_t acce, uint32_t dece)
 {
     platform_err_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     int32_t acce_cnt = (int32_t)(mm_to_cnt(acm, acce) / 10);
     int32_t dece_cnt = (int32_t)(mm_to_cnt(acm, dece) / 10);
     status = u32_reg_set(acm, 0xcc, acce_cnt);
@@ -676,7 +676,7 @@ static void acce_dece_set(struct h_motor_base *me, uint32_t acce, uint32_t dece)
 
 static void manual_mode(struct h_motor_base *me, bool is_manual)
 {
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
 
     int32_t level;
 
@@ -689,7 +689,7 @@ static void manual_mode(struct h_motor_base *me, bool is_manual)
 static void _status_get(struct h_motor_base *me)
 {
     platform_err_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     status = status_read(me);
     if (acm->base.status_cb && PLATFORM_EOK == status)
     {
@@ -707,9 +707,9 @@ static void status_get(struct h_motor_base *me)
 }
 
 static bool _status_get_sync(struct h_motor_base *me, 
-                              h_motor_base_status_t *status)
+                              struct h_motor_base_status *status)
 {
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     
     if (me == NULL || status == NULL)
     {
@@ -717,14 +717,14 @@ static bool _status_get_sync(struct h_motor_base *me,
     }
     
     /* Directly return cached status */
-    memcpy(status, &acm->status, sizeof(h_motor_base_status_t));
+    memcpy(status, &acm->status, sizeof(struct h_motor_base_status));
     return true;
 }
 
 static void _cur_pos_get(struct h_motor_base *me)
 {
     platform_err_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     int32_t cur_pos;
     status = s32_reg_get(acm, ACM_REG_ACTUAL_POSITION,
                          &cur_pos);
@@ -811,7 +811,7 @@ static void cur_pos_get(struct h_motor_base *me)
 static void _enable(struct h_motor_base *me, bool enable)
 {
     platform_err_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     uint32_t data;
 
     if (enable) data = 21;
@@ -834,7 +834,7 @@ static void enable(struct h_motor_base *me, bool enable)
 static void _home(struct h_motor_base *me)
 {
     platform_err_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     status = u32_reg_set(acm, 0xc2, 529);
     status = status || t_cmd_set(acm, 2);
     err_cb_check(acm, status);
@@ -852,7 +852,7 @@ static void _home_set(struct h_motor_base *me, double home_offset)
 {
     platform_err_t status;
     uint32_t traj_status = 0;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
 
     status = u32_reg_get(acm, 0xc9, &traj_status);
     if (PLATFORM_EOK != status)
@@ -909,7 +909,7 @@ static void home_set(struct h_motor_base *me, double home_offset)
 static void _positive_limit(struct h_motor_base *me, uint32_t positive_limit)
 {
     platform_err_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     status = u32_reg_set(acm, 0xb8, mm_to_cnt(acm, positive_limit));
     err_cb_check(acm, status);
 }
@@ -927,7 +927,7 @@ static void _negative_limit(struct h_motor_base *me,
                              int32_t negative_limit_mm)
 {
     platform_err_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     /* Register 0xb9: Negative Software Limit (signed) */
     status = s32_reg_set(acm, 0xb9,
                          mm_to_cnt(acm, negative_limit_mm));
@@ -947,7 +947,7 @@ static void negative_limit(struct h_motor_base *me,
 static void _fault_clear(struct h_motor_base *me)
 {
     platform_err_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     status = u32_reg_set(acm, ACM_REG_LATCHING_FAULT_STATUS,
                          0xffffffff);
     err_cb_check(acm, status);
@@ -1029,7 +1029,7 @@ static const reg_bit_desc_t fault_bits[] =
 
 static void _fault_diag(struct h_motor_base *me)
 {
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     uint32_t evt_reg = 0;
     uint32_t latched_evt = 0;
     uint32_t fault_reg = 0;
@@ -1111,7 +1111,7 @@ static void _following_err_enable(struct h_motor_base *me,
                                    bool enable)
 {
     platform_err_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     uint32_t reg_data;
 
     status = u32_reg_get(acm, ACM_REG_FAULT_MASK,
@@ -1138,7 +1138,7 @@ static void _following_err_limit_set(struct h_motor_base *me,
                                       double limit_mm)
 {
     platform_err_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     int32_t limit_cnt = mm_to_cnt(acm, limit_mm);
     status = s32_reg_set(acm, 0xBA, limit_cnt);
     err_cb_check(acm, status);
@@ -1156,7 +1156,7 @@ static void following_err_limit_set(struct h_motor_base *me,
 
 static void _encoder_ratio_set(struct h_motor_base *me, double cnt_per_mm)
 {
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     if (cnt_per_mm > 0.0)
     {
         acm->encoder_cnt_per_mm = cnt_per_mm;
@@ -1176,7 +1176,7 @@ static void _i2t_fault_enable(struct h_motor_base *me,
                                bool enable)
 {
     platform_err_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     uint32_t reg_data;
 
     status = u32_reg_get(acm, ACM_REG_FAULT_MASK,
@@ -1204,7 +1204,7 @@ static void _i2t_peak_current_set(struct h_motor_base *me,
                                    uint16_t current_001a)
 {
     platform_err_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     status = u32_reg_set(acm,
                          ACM_REG_PEAK_CURRENT_LIMIT,
                          (uint32_t)current_001a);
@@ -1225,7 +1225,7 @@ static void _i2t_continuous_current_set(
     struct h_motor_base *me, uint16_t current_001a)
 {
     platform_err_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     status = u32_reg_set(acm,
                          ACM_REG_CONTINUOUS_CURRENT_LIMIT,
                          (uint32_t)current_001a);
@@ -1246,7 +1246,7 @@ static void _i2t_peak_time_set(struct h_motor_base *me,
                                 uint16_t time_ms)
 {
     platform_err_t status;
-    h_motor_acm_t *acm = (h_motor_acm_t *)me;
+    struct h_motor_acm *acm = (struct h_motor_acm *)me;
     status = u32_reg_set(acm,
                          ACM_REG_PEAK_CURRENT_TIME,
                          (uint32_t)time_ms);
@@ -1263,9 +1263,9 @@ static void i2t_peak_time_set(struct h_motor_base *me,
     acm_work_queue_put(me, &work);
 }
 
-/* 静态 ops 表 —— const 落 .rodata 全程序共享。所有 h_motor_acm_t
+/* 静态 ops 表: const 落 .rodata 全程序共享。所有 struct h_motor_acm
  * 实例 me->ops 都指向这一份。 */
-static const h_motor_base_ops_t ops =
+static const struct h_motor_base_ops ops =
 {
     .motor_stop = motor_stop,
     .motor_start = motor_start,
@@ -1295,7 +1295,7 @@ static const h_motor_base_ops_t ops =
 
 static void work_thread(void *argument)
 {
-    h_motor_acm_t *me = argument;
+    struct h_motor_acm *me = argument;
     acm_work_t work;
     for(;;)
     {
@@ -1316,7 +1316,7 @@ static void work_thread(void *argument)
         case ACM_MOVE_VELOCITY_MODE:
         {
             _move_velocity_mode((struct h_motor_base *)me, 
-                        (h_motor_base_move_dir_t)work.work_param.s32_data);
+                        (enum h_motor_base_move_dir)work.work_param.s32_data);
             break;
         }
         case ACM_MOVE_RELATIVE_MODE:
@@ -1443,7 +1443,7 @@ static void work_thread(void *argument)
     }
 }
 
-void h_motor_acm_init(h_motor_acm_t *me, h_motor_acm_init_param_t *init_param)
+void h_motor_acm_init(struct h_motor_acm *me, struct h_motor_acm_init_param *init_param)
 {
     platform_err_t ret;
     
@@ -1463,7 +1463,7 @@ void h_motor_acm_init(h_motor_acm_t *me, h_motor_acm_init_param_t *init_param)
         .stack_size = 1024,
     };
     
-    memset(me, 0, sizeof(h_motor_acm_t));
+    memset(me, 0, sizeof(struct h_motor_acm));
     h_motor_base_init(&me->base);
 
     me->encoder_cnt_per_mm = DEFAULT_ENCODER_CNT_PER_MM;

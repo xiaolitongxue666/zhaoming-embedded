@@ -2,14 +2,16 @@
 
 第 3 章 [你用 C 手搓了一个 class](../../../book/01-封装/03-手搓class.md) 的配套代码。
 
-## 三套实现
+## 目录结构
 
 ```
 03-handwritten-class/
 ├── pc/                 完整可跑的 PC 模拟版（gcc 一句编译）
-├── stm32-snippet/      STM32 HAL 等效片段（不是完整工程，见附录 B）
-└── linux-snippet/      Linux 用户态 sysfs 等效片段（不是完整工程，见附录 C）
+└── platform-mcu/
+    └── stm32/          STM32 真机版（用 PIN_NUM 编码）
 ```
+
+Linux 用户态完整工程见附录 C。
 
 ## 教学要点
 

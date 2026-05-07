@@ -12,7 +12,11 @@
  */
 
 #include "led.h"
+#include "led_gpio.h"
+#include "led_pwm.h"
+#include "led_i2c.h"
 #include "container_of.h"
+#include "platform.h"
 #include <stddef.h>
 #include <stdio.h>
 
@@ -37,7 +41,7 @@ int main(void)
 	       (unsigned)offsetof(struct led_i2c, base));
 	printf("\n");
 
-	rc = led_gpio_init(&g_err, "ERR", 10, true);
+	rc = led_gpio_init(&g_err, "ERR", PIN_NUM('A', 13), true);
 	if (rc != 0) {
 		fprintf(stderr, "led_gpio_init failed: %d\n", rc);
 		return 1;

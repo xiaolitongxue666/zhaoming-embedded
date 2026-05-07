@@ -327,7 +327,7 @@ INIT_APP_EXPORT(fn)       /* 段名 .rti_fn.6 */
 
 **Zephyr**：`SYS_INIT(fn, level, priority)`，level 取 PRE_KERNEL_1 / PRE_KERNEL_2 / POST_KERNEL / APPLICATION，机制同源。
 
-**裸机 STM32**：自己定义 section + 链接脚本里加几行（详见 [`oop-in-c/code/17-initcall/stm32-snippet/`](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/17-initcall/stm32-snippet/)），main 里调一次 `do_initcalls()`。
+**裸机 STM32**：自己定义 section + 链接脚本里加几行（详见 [`oop-in-c/code/17-initcall/platform-mcu/stm32/`](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/17-initcall/platform-mcu/stm32/)），main 里调一次 `do_initcalls()`。
 
 这不是 Linux 独有的魔法。这是 C 语言 + 链接器就能做到的事，任何 C 项目都能用。
 
@@ -484,7 +484,7 @@ MODULE_INIT(led_stm32_init);
 
 `main` 里启动期 `do_initcalls()` 调一次。每加一个新驱动就多一份 `.c` + 一行 `MODULE_INIT`，`main` 0 改动，链接器自动把所有驱动收集到那个段里。
 
-完整说明见 [`oop-in-c/code/17-initcall/stm32-snippet/README.md`](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/17-initcall/stm32-snippet/README.md)。
+完整说明见 [`oop-in-c/code/17-initcall/platform-mcu/stm32/README.md`](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/17-initcall/platform-mcu/stm32/README.md)。
 
 ## 17.11 你现在的代码在 Linux 上长什么样
 
