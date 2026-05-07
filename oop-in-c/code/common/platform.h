@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: MIT */
 /**
  * @file    platform.h
  * @brief   平台抽象层 - GPIO 操作接口（跨章共用的对外封装函数声明）

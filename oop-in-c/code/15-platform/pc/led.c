@@ -1,64 +1,32 @@
 /* SPDX-License-Identifier: MIT */
 /*
- * led.c - LED 驱动层实现
+ * led.c - 子类层 (ch15 完整版, 风格 A)
  *
- * 这一层永远只调 platform 层的封装函数 (platform_gpio_write /
- * platform_gpio_init 等, 在 common/platform.h 声明), 从来不直接碰寄存器,
- * 也不知道 PC / STM32 / Linux 各自怎么实现.
+ * 这一份只负责子类: 三种硬件实现 (gpio_xxx / pwm_xxx / i2c_xxx) +
+ * 三个子类 init (led_gpio_init / led_pwm_init / led_i2c_init).
  *
- * 同一份 led.c 在 PC、STM32、Linux 上都能编译运行, 源码 0 修改. 上层 (app.c)
- * 调的全部是 led_base * 句柄, 下层 (platform_*.c) 提供同样四个函数,
- * led 这一层处在中间, 只关心"GPIO 能写吗、能调亮度吗、能跑 I2C 吗"这种
- * 抽象能力.
+ * 父类统一接口 (led_on / led_off / led_set_brightness) 和共有 init
+ * (led_base_init) 都在 led_base.c, 子类 init 第一行调 led_base_init
+ * 把对应的 const ops 表交给父类一次填好.
  *
- * 见 ch15 § 15.2 父类层 + § 15.3 子类层.
+ * 子类实现层 (gpio_on / gpio_off / pwm_on / ...) 函数签名都是
+ * (struct led_base *me) -- 父类统一接口透过 ops 跳过来时, 拿到的是
+ * base 指针. 第一行用 container_of 反推回子类拿硬件字段
+ * (pin / channel / addr). 见 ch13 § 13.5 三步宏 container_of.
+ *
+ * 这一层永远只调 platform 层的封装函数 (platform_gpio_init / write,
+ * 在 common/platform.h 声明), 从来不直接碰寄存器. 同一份 led.c
+ * 在 PC、STM32、Linux 上都能编译运行, 源码 0 修改.
+ *
+ * 见 ch15 § 15.3 子类层.
  */
 
 #include "led.h"
 #include "container_of.h"
 #include "platform.h"
-#include <assert.h>
 #include <stdio.h>
 
-/* ============== 父类统一接口 (必填 + 选填) ============== */
-
-int led_on(struct led_base *me)
-{
-	if (!me)
-		return -1;
-	/* on 是必填: 子类必须实现. 调试构建里 assert 抓到忘填的子类
-	 * 立刻 abort 给行号; Release 构建定义 NDEBUG 后 assert 整行消失,
-	 * 零运行时开销. 见 ch14 § 14.2. */
-	assert(me->ops && me->ops->on &&
-	       "led_on: subclass must implement on()");
-	return me->ops->on(me);
-}
-
-int led_off(struct led_base *me)
-{
-	if (!me)
-		return -1;
-	assert(me->ops && me->ops->off &&
-	       "led_off: subclass must implement off()");
-	return me->ops->off(me);
-}
-
-int led_set_brightness(struct led_base *me, uint8_t brightness)
-{
-	if (!me || !me->ops)
-		return -1;
-	if (!me->ops->set_brightness) {
-		/* 选填: GPIO 灯没有调光能力, 子类不填 set_brightness 就走
-		 * 父类的默认行为 (打印一行 "no dimming, skip"), 不崩.
-		 * 见 ch14 § 14.3. */
-		printf("  [%s] no dimming, skip (brightness=%u)\n",
-		       me->name, (unsigned)brightness);
-		return 0;
-	}
-	return me->ops->set_brightness(me, brightness);
-}
-
-/* ============== GPIO 子类 ============== */
+/* ============== 子类一: GPIO LED ============== */
 
 static int gpio_on(struct led_base *me)
 {
@@ -80,24 +48,29 @@ static int gpio_off(struct led_base *me)
 	return 0;
 }
 
-/* set_brightness 故意不填, GPIO 不支持调光 (走父类默认行为) */
+/* set_brightness 故意不填, GPIO 不支持调光, 走父类默认行为 */
 static const struct led_ops gpio_ops = {
 	.on  = gpio_on,
 	.off = gpio_off,
 };
 
-void led_gpio_init(struct led_gpio *me, const char *name,
-		   uint8_t pin, bool on_level)
+int led_gpio_init(struct led_gpio *me, const char *name,
+                  uint8_t pin, bool on_level)
 {
-	me->base.ops   = &gpio_ops;
-	me->base.name  = name;
-	me->base.is_on = false;
-	me->pin        = pin;
-	me->on_level   = on_level;
+	int rc;
+	if (!me)
+		return -1;
+	rc = led_base_init(&me->base, name, &gpio_ops);
+	if (rc != 0)
+		return rc;
+	me->pin      = pin;
+	me->on_level = on_level;
 	platform_gpio_init(pin, GPIO_MODE_OUTPUT);
+	platform_gpio_write(pin, !on_level);    /* 上电先关灯 */
+	return 0;
 }
 
-/* ============== PWM 子类 ============== */
+/* ============== 子类二: PWM LED ============== */
 
 static int pwm_on(struct led_base *me)
 {
@@ -135,17 +108,23 @@ static const struct led_ops pwm_ops = {
 	.set_brightness = pwm_set_brightness,
 };
 
-void led_pwm_init(struct led_pwm *me, const char *name,
-		  uint8_t channel, uint8_t duty)
+int led_pwm_init(struct led_pwm *me, const char *name,
+                 uint8_t channel, uint8_t duty)
 {
-	me->base.ops   = &pwm_ops;
-	me->base.name  = name;
-	me->base.is_on = false;
-	me->channel    = channel;
-	me->duty       = duty;
+	int rc;
+	if (!me)
+		return -1;
+	if (duty > 100)
+		return -2;
+	rc = led_base_init(&me->base, name, &pwm_ops);
+	if (rc != 0)
+		return rc;
+	me->channel = channel;
+	me->duty    = duty;
+	return 0;
 }
 
-/* ============== I2C 子类 ============== */
+/* ============== 子类三: I2C 扩展芯片 LED ============== */
 
 static int i2c_on(struct led_base *me)
 {
@@ -165,17 +144,22 @@ static int i2c_off(struct led_base *me)
 	return 0;
 }
 
+/* set_brightness 故意不填, I2C 这一路只控开/关, 走父类默认行为 */
 static const struct led_ops i2c_ops = {
 	.on  = i2c_on,
 	.off = i2c_off,
 };
 
-void led_i2c_init(struct led_i2c *me, const char *name,
-		  uint8_t bus, uint8_t addr)
+int led_i2c_init(struct led_i2c *me, const char *name,
+                 uint8_t bus, uint8_t addr)
 {
-	me->base.ops   = &i2c_ops;
-	me->base.name  = name;
-	me->base.is_on = false;
-	me->bus        = bus;
-	me->addr       = addr;
+	int rc;
+	if (!me)
+		return -1;
+	rc = led_base_init(&me->base, name, &i2c_ops);
+	if (rc != 0)
+		return rc;
+	me->bus  = bus;
+	me->addr = addr;
+	return 0;
 }

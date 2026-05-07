@@ -1,16 +1,22 @@
-﻿/* SPDX-License-Identifier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * led.c - 子类实现里用 container_of 反推自己
+ * led.c - 子类实现里用 container_of 反推自己 (ch13 版)
  *
- * 和 ch12 的差别只有一处：(struct led_xxx *)me 强转换成
- *   container_of(me, struct led_xxx, base);
+ * 子类 init (led_gpio_init / led_pwm_init / led_i2c_init) 第一行调
+ * led_base_init, 把对应的 const ops 表交给 base. 后面只填子类自己
+ * 的硬件字段. 这跟 ch10/ch11 一样.
  *
- * GPIO 子类的 base 故意不在第一个位置，container_of 照样对。这是
- * 整个 ch13 想证明的核心。强转那一招要求 base 必须在 offset 0，
- * container_of 没有这条限制：它在编译期算出 base 的真实偏移、运行时
- * 一条减法指令就还原回外层 struct 起点。
+ * ch13 唯一不同在子类实现层: 把 ch12 那招
+ *     struct led_xxx *self = (struct led_xxx *)me;
+ * 换成
+ *     struct led_xxx *self = container_of(me, struct led_xxx, base);
  *
- * 见 ch13 § 13.6 在 gpio_on 里用一下 / § 13.8.2 位置无关 demo。
+ * GPIO 子类的 base 故意不在第一个位置, container_of 照样对. 这是
+ * 整个 ch13 想证明的核心: 强转那一招要求 base 必须在 offset 0,
+ * container_of 没有这条限制 -- 编译期算出 base 的真实偏移, 运行时
+ * 一条减法指令就还原回外层 struct 起点.
+ *
+ * 见 ch13 § 13.6 在 gpio_on 里用一下 / § 13.8.2 位置无关 demo.
  */
 
 #include "led.h"
@@ -79,18 +85,22 @@ static const struct led_ops gpio_ops = {
 	.off = gpio_off,
 };
 
-void led_gpio_init(struct led_gpio *me, const char *name,
-		   uint8_t pin, bool on_level)
+int led_gpio_init(struct led_gpio *me, const char *name,
+		  uint8_t pin, bool on_level)
 {
-	me->magic       = 0xCAFE;
-	me->base.ops    = &gpio_ops;
-	me->base.name   = name;
-	me->base.is_on  = false;
-	me->pin         = pin;
-	me->on_level    = on_level;
+	int rc;
+	if (!me)
+		return -1;
+	rc = led_base_init(&me->base, name, &gpio_ops);
+	if (rc != 0)
+		return rc;
+	me->magic    = 0xCAFE;
+	me->pin      = pin;
+	me->on_level = on_level;
 
 	platform_gpio_init(pin, GPIO_MODE_OUTPUT);
-	platform_gpio_write(pin, !on_level);
+	platform_gpio_write(pin, !on_level);     /* 上电先关灯 */
+	return 0;
 }
 
 /* ============== 子类二：PWM LED ============== */
@@ -131,14 +141,20 @@ static const struct led_ops pwm_ops = {
 	.set_brightness = pwm_set_brightness,
 };
 
-void led_pwm_init(struct led_pwm *me, const char *name,
-		  uint8_t channel, uint8_t duty)
+int led_pwm_init(struct led_pwm *me, const char *name,
+		 uint8_t channel, uint8_t duty)
 {
-	me->base.ops   = &pwm_ops;
-	me->base.name  = name;
-	me->base.is_on = false;
-	me->channel    = channel;
-	me->duty       = duty;
+	int rc;
+	if (!me)
+		return -1;
+	if (duty > 100)
+		return -2;
+	rc = led_base_init(&me->base, name, &pwm_ops);
+	if (rc != 0)
+		return rc;
+	me->channel = channel;
+	me->duty    = duty;
+	return 0;
 }
 
 /* ============== 子类三：I2C LED ============== */
@@ -166,12 +182,16 @@ static const struct led_ops i2c_ops = {
 	.off = i2c_off,
 };
 
-void led_i2c_init(struct led_i2c *me, const char *name,
-		  uint8_t bus, uint8_t addr)
+int led_i2c_init(struct led_i2c *me, const char *name,
+		 uint8_t bus, uint8_t addr)
 {
-	me->base.ops   = &i2c_ops;
-	me->base.name  = name;
-	me->base.is_on = false;
-	me->bus        = bus;
-	me->addr       = addr;
+	int rc;
+	if (!me)
+		return -1;
+	rc = led_base_init(&me->base, name, &i2c_ops);
+	if (rc != 0)
+		return rc;
+	me->bus  = bus;
+	me->addr = addr;
+	return 0;
 }

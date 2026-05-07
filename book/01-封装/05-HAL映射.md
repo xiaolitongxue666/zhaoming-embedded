@@ -1,4 +1,4 @@
-# 第 5 章 · HAL 库源码漫游
+# 第 5 章 · HAL 库源码漫游 · 从抽象接口到平台实现
 
 配套代码：[`oop-in-c/code/05-hal-mapping/`](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/05-hal-mapping/)
 
@@ -298,7 +298,7 @@ sleep(1);
 gpio_write(13, 0);
 ```
 
-sysfs 的"把硬件当文件"机制怎么和内核的 `file_operations` + `gpio_chip` 衔接起来，是第 16 章的内容。这一章先看到"用户态调用还是同一个套路"。
+sysfs 的"把硬件当文件"机制怎么和内核的 `file_operations` + `gpio_chip` 衔接起来：`gpio_chip` 是第 16 章的内容，`file_operations` 是第 18 章 § 18.1 的内容。这一章先看到"用户态调用还是同一个套路"。
 
 新内核推荐 libgpiod 替代 sysfs，附录 C 会展开。
 

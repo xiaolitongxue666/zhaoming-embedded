@@ -1,11 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 /**
  * @file  led.h
- * @brief LED 基类 + 三种子类 - 向上转型工程化高潮
+ * @brief LED 父类统一接口 + 三种子类 - 向上转型工程化高潮
  *
  * @details
  * 本章 (ch12) 把前面演化好的 ops 表机制放进真实工程结构:
- *   - 父类 struct led_base: 所有 LED 共有字段 (ops + name + is_on)
+ *   - 父类 struct led_base: 所有 LED 共有字段 (ops + name + is_on),
+ *     声明在 led_base.h, 通用 init 在 led_base.c
  *   - 子类 struct led_gpio / led_pwm / led_i2c: 三种硬件实现,
  *     base 嵌在第一个字段, 后面追加各自的硬件资源 (pin / channel /
  *     bus + addr). 父类放共性、硬件字段下沉到子类.
@@ -24,32 +25,18 @@
 #ifndef LED_H
 #define LED_H
 
-#include <stdint.h>
-#include <stdbool.h>
-
-struct led_base;
+#include "led_base.h"
 
 /*
  * struct led_ops - 操作表 (ops 表). 子类把自己的实现填进去,
  * 父类统一接口 led_on / led_off 通过 ops 表分发到子类.
+ *
+ * ch12 主题是向上转型, 应用层只用得着 on / off, 表先收缩成两字段.
+ * 后续章节按需要再加字段.
  */
 struct led_ops {
 	int (*on)(struct led_base *me);
 	int (*off)(struct led_base *me);
-};
-
-/*
- * struct led_base - 父类.
- *
- * 三个字段:
- *   ops    : 子类的操作表入口, 必须放第一个 (向上转型零开销)
- *   name   : 给日志打印, 也是子类的"我是谁"标识
- *   is_on  : 当前开关状态
- */
-struct led_base {
-	const struct led_ops *ops;
-	const char           *name;
-	bool                  is_on;
 };
 
 /* 应用层入口: 所有调用都走 led_base 句柄 */
@@ -72,8 +59,8 @@ struct led_gpio {
 	bool            on_level;   /* 1 = 高电平点亮, 0 = 低电平点亮 */
 };
 
-void led_gpio_init(struct led_gpio *me, const char *name,
-		   uint8_t pin, bool on_level);
+int led_gpio_init(struct led_gpio *me, const char *name,
+                  uint8_t pin, bool on_level);
 
 /*
  * ------- 子类二: PWM LED -------
@@ -86,8 +73,8 @@ struct led_pwm {
 	uint8_t         duty;
 };
 
-void led_pwm_init(struct led_pwm *me, const char *name,
-		  uint8_t channel, uint8_t duty);
+int led_pwm_init(struct led_pwm *me, const char *name,
+                 uint8_t channel, uint8_t duty);
 
 /*
  * ------- 子类三: I2C 扩展芯片 LED -------
@@ -104,7 +91,7 @@ struct led_i2c {
 	uint8_t         addr;
 };
 
-void led_i2c_init(struct led_i2c *me, const char *name,
-		  uint8_t bus, uint8_t addr);
+int led_i2c_init(struct led_i2c *me, const char *name,
+                 uint8_t bus, uint8_t addr);
 
 #endif /* LED_H */

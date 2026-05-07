@@ -19,7 +19,7 @@
  *   direction 旋转方向 (false=反, true=正)
  *   state     运行状态 (0=停, 1=正转, 2=反转)
  *
- * 见书 § 3.7.8 为什么 motor 多了 direction 和 state: 字段不是越多
+ * 见书 § 3.7.7 为什么 motor 多了 direction 和 state: 字段不是越多
  * 越好, 跟 motor 这个对象本身的属性走。"上次启动时间"/"累计运行小时"
  * 这种是另一个层次的数据 (运维监控), 属于另一个模块的职责, 不该
  * 塞进 struct motor。ch04 数据归位会展开。

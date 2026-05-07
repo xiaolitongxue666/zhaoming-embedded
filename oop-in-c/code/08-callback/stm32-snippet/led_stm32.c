@@ -1,5 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 /*
+ * 本文件是 STM32 真实硬件版本片段。需要 STM32CubeMX 生成的 hi2c1 / htim3 等外设句柄。
+ * 实际工程里 platform_xxx 函数体直接调 HAL API。
+ * 用 mock-CubeMX 头文件可独立编译验证语法。
+ */
+
+/*
  * led_stm32.c - 函数指针当参数 在 STM32 上的样子
  *
  * 三种 on/off 实现走真实硬件: GPIO 拉电平 / PWM 改占空比 / I2C 发命令.

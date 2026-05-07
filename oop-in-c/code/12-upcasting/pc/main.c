@@ -28,12 +28,18 @@ static void network_heartbeat(void)
 
 int main(void)
 {
+	int rc;
+
 	printf("=========================================\n");
 	printf("  ch12 - upcasting\n");
 	printf("  one led_base * handle, any subclass\n");
 	printf("=========================================\n");
 
-	board_init();
+	rc = board_init();
+	if (rc != 0) {
+		printf("board_init failed, rc=%d\n", rc);
+		return rc;
+	}
 
 	alarm_blink();
 	network_heartbeat();

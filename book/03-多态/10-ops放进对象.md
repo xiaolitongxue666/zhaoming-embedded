@@ -1,4 +1,4 @@
-# 第 10 章 · ops 放进对象
+# 第 10 章 · ops 放进对象 · vptr 落地
 
 配套代码：[`oop-in-c/code/10-vptr/`](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/10-vptr/)
 
@@ -120,42 +120,32 @@ init 就是开门营业。手艺一次交付，终身受用。
 
 ![init 填充 ops](../assets/ch10/slide3_init填充ops.png)
 
-## 10.4 test_led 的新样子
+## 10.4 应用层的新样子
 
-ops 已经在每颗 LED 身上了。`test_led` 现在不需要再接 ops 参数：
+ops 已经在每颗 LED 身上了。应用层调用不再需要从外面传 ops 表，直接从 LED 自己身上拿：
 
 ```c
-int test_led(struct led_base *me)
-{
-	if (!me || !me->ops ||
-	    !me->ops->on || !me->ops->off || !me->ops->toggle)
-		return -1;
-
-	printf("  [test] open ...\n");
-	me->ops->on(me);
-	printf("  [test] toggle ...\n");
-	me->ops->toggle(me);
-	printf("  [test] close ...\n");
-	me->ops->off(me);
-	return 0;
-}
+me->ops->on(me);
+me->ops->off(me);
 ```
 
-NULL check 把三个 ops 字段全检一遍（`on` / `off` / `toggle` 任意一个没填都不能跑），然后 open / toggle / close 三步走完一颗灯的完整测试。通过 `me` 找到 `me->ops`，再从 ops 里找到对应的函数指针调出去，调用方完全不用知道是哪种 LED。
+通过 `me` 找到 `me->ops`，再从 ops 里找到对应的函数指针调出去。换不同的 LED，`me` 不同，`me->ops` 自动指向对的那张表，落到对的实现。
 
 应用层的调用点变成：
 
 ```c
-test_led(&gpio_led.base);    /* 红灯 -> 走 gpio_on / gpio_off */
-test_led(&pwm_led.base);     /* 蓝灯 -> 走 pwm_on  / pwm_off  */
-test_led(&i2c_led.base);     /* 绿灯 -> 走 i2c_on  / i2c_off  */
+struct led_base *red   = &gpio_led.base;
+struct led_base *blue  = &pwm_led.base;
+struct led_base *green = &i2c_led.base;
+
+red->ops->on(red);     /* 走 gpio_on */
+blue->ops->on(blue);   /* 走 pwm_on  */
+green->ops->on(green); /* 走 i2c_on  */
 ```
 
-同一个 `test_led` 函数，传不同的 LED，各自执行各自的 on 和 off。
+每次都得自己写 `me->ops->on(me)` 这一长串。下一章会把它包成一个统一接口 `led_on(me)`，应用层不再写两次跳转，只调一个名字。
 
-`test_led` 不认识 `gpio_on`，也不认识 `pwm_on`。它只管调 `me->ops->on`。谁的 ops？`me` 自己知道。不用你帮它记了。
-
-一路走来，参数从散装一堆，到 ch09 打包成两个，现在一个就够。
+一路走来，调用方传给灯的参数从散装一堆，到 ch09 打包成两个，现在一个就够：只要 `me`，ops 表自己跟着。
 
 ![调用对比](../assets/ch10/slide4_调用对比.png)
 
@@ -246,6 +236,8 @@ static int gpio_on(struct led_base *me)
 这一招的前提是"base 在子类第一个字段"。Linux 内核为了打破这个限制（让 base 可以在中间），引入了一个宏来反向算地址。本章先用最朴素的强转，后面会展开更通用的做法。
 
 ### 10.6.4 视频版与配套代码版字段差异说明
+
+差异原则详见 preface「配套代码 vs 视频版」。下面是本章具体差异。
 
 视频 EP15 里 ops 表字段是 `on / off / set_brightness`（视频画面里能看到 PWM 调亮度的演示）。本章配套代码 `oop-in-c/code/10-vptr/` 用的是 `on / off / toggle`，和第 9 章配套代码字段保持一致。
 

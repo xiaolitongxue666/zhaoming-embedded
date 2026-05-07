@@ -1,4 +1,4 @@
-# 第 16 章 · 为什么 Linux 一点都不难
+# 第 16 章 · 为什么 Linux 一点都不难 · 你已经在写 Linux 风格代码
 
 配套代码：[`oop-in-c/code/16-linux-style/`](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/16-linux-style/)
 
@@ -12,7 +12,7 @@
 
 ch15 的 LED 框架隔离了主板：换主板方案，应用层 0 改动。
 
-但 `gpio_on` 里头调的是 `platform_gpio_write` 这个封装函数，封装函数内部走 ops 分发到当前选定的 platform 实例（PC 版 / STM32 版 / Linux 版），platform 实例本身就是写寄存器、写 sysfs 的具体代码。换芯片呢？从 STM32 换到瑞萨，BSRR 寄存器换名字了，platform_ops_stm32.c 里的实现要重写。
+但 `gpio_on` 里头调的是 `platform_gpio_write` 这个封装函数，封装函数内部走 ops 分发到当前选定的 platform 实例（PC 版 / STM32 版 / Linux 版），platform 实例本身就是写寄存器、写 sysfs 的具体代码。换芯片呢？从 STM32 换到瑞萨，BSRR 寄存器换名字了，`led_stm32.c` 里的实现要重写。
 
 主板的变化你的 LED 层隔离了。芯片的变化，谁来隔离？
 
@@ -21,6 +21,15 @@ ch15 的 LED 框架隔离了主板：换主板方案，应用层 0 改动。
 ## 16.2 同一招用第二次：再加一层
 
 答案，再加一层。Platform 层。
+
+ch15 的 `struct led_base + led_ops` 框架是设备层，跑在 LED / sensor / motor 这一类业务对象上。ch16 要在它下面加一层，把"具体芯片的 GPIO 怎么写电平"这件事也用 ops 表抽象出来。结构和上一章一字不差，只是层次往下移了一层：
+
+```
+ch15 设备层：    led_base   +   led_ops          应用层调 led_on(handle)
+ch16 平台层：    gpio_chip  +   gpio_chip 里的函数指针   led 驱动调 gpiod_set_value(desc)
+```
+
+之前你看不到的 `platform_gpio_write` 内部，今天打开看里面：它要落到具体芯片的寄存器，本章把这一层用 `gpio_chip` 抽象起来。
 
 不看寄存器，看功能。
 

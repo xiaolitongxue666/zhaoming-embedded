@@ -39,8 +39,8 @@ oop-in-c/code/<ch>-<topic>/
 | ch12 | `12-upcasting/` | 向上转型，`(struct led_base *)led` 子类指针转基类 |
 | ch13 | `13-container-of/` | container_of 宏，从基类指针拿回子类 |
 | ch14 | `14-pure-virtual/` | 纯虚 / 抽象类，`int (*on)(...);` 没赋值 |
-| ch15 | `15-platform/` | platform 抽象到底，PC / STM32 / Linux 三套 ops 实例运行时切换 |
-| ch16 | `16-linux-style/` | Linux 内核风格，引用 `struct file_operations` 和 `struct gpio_chip` |
+| ch15 | `15-platform/` | platform 抽象到底，GPIO / PWM / I2C 三种硬件混搭，应用层 0 修改换硬件方案 |
+| ch16 | `16-linux-style/` | Linux 内核风格，引用 `struct gpio_chip` |
 | ch17 | `17-initcall/` | 链接自动初始化，模仿 Linux 内核的 module_init 机制 |
 | ch18 | `18-roadmap/` | 全书地图回顾，一颗 LED 18 章演化路径全景图 |
 

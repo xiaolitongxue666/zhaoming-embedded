@@ -23,6 +23,7 @@
  */
 
 #include "leds.h"
+#include <stdio.h>
 
 /*
  * 子类对象 - 文件作用域 + static, 外部不可见.
@@ -50,20 +51,40 @@ struct led_base *g_led_error;
 struct led_base *g_led_status;
 struct led_base *g_led_network;
 
-void board_init(void)
+int board_init(void)
 {
+	int rc;
+
 	/*
 	 * 各自走自己的子类构造函数, 把硬件资源传进去.
-	 * 子类 init 内部把对应的 ops 表挂到 base 字段.
+	 * 子类 init 内部第一行调 led_base_init, 把对应的 ops 表挂到
+	 * base 字段, 再填子类自己的硬件资源.
 	 *
 	 * 三种 LED 三种硬件:
 	 *   GPIO 灯 (ERR)   -> pin = 10, on_level = high
 	 *   PWM  灯 (STAT)  -> channel = 1, duty = 50%
 	 *   I2C  灯 (NET)   -> bus = 0, addr = 0x20
+	 *
+	 * 任意一颗 LED 初始化失败, board_init 直接把错误码返回给 main.
+	 * 板级 init 出错时让上层立刻知道, 比让设备半死不活地跑下去要好.
 	 */
-	led_gpio_init(&s_led_err,    "ERR",  10, true);
-	led_pwm_init (&s_led_status, "STAT",  1, 50);
-	led_i2c_init (&s_led_net,    "NET",   0, 0x20);
+	rc = led_gpio_init(&s_led_err, "ERR", 10, true);
+	if (rc != 0) {
+		printf("[board] led_gpio_init(ERR) failed, rc=%d\n", rc);
+		return rc;
+	}
+
+	rc = led_pwm_init(&s_led_status, "STAT", 1, 50);
+	if (rc != 0) {
+		printf("[board] led_pwm_init(STAT) failed, rc=%d\n", rc);
+		return rc;
+	}
+
+	rc = led_i2c_init(&s_led_net, "NET", 0, 0x20);
+	if (rc != 0) {
+		printf("[board] led_i2c_init(NET) failed, rc=%d\n", rc);
+		return rc;
+	}
 
 	/*
 	 * 关键三行: 把子类对象的 base 地址, 赋给父类指针句柄.
@@ -85,4 +106,6 @@ void board_init(void)
 	g_led_error   = &s_led_err.base;
 	g_led_status  = &s_led_status.base;
 	g_led_network = &s_led_net.base;
+
+	return 0;
 }

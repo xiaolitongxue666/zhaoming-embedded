@@ -8,6 +8,10 @@
  * 第一行 "(struct led_xxx *)me" 强转回子类是简单写法, 前提是 base
  * 在子类第 0 偏移.
  *
+ * 子类 init 第一行调 led_base_init (在 led_base.c), 把对应的 ops 表
+ * 当常量参数传过去. base 把 ops / name / is_on 一次填好, 子类只管
+ * 自己的硬件资源 (pin / channel / addr) 和外设初始化调用.
+ *
  * 子类调用 platform 层的 platform_gpio_write / platform_gpio_init 等
  * 封装函数 (signature 跟 ch01 起一字不变). 应用层和驱动层永远只见
  * 普通函数, 不直接碰 ops 字段.
@@ -16,7 +20,6 @@
 #include "led.h"
 #include "platform.h"
 #include <stdio.h>
-#include <stddef.h>
 
 /* ============== 父类统一接口 ============== */
 
@@ -69,22 +72,26 @@ static const struct led_ops gpio_ops = {
 };
 
 /*
- * 子类构造函数 - 把 ops 表填进 base, 再填子类自己的硬件资源.
+ * 子类构造函数 - 第一行调 led_base_init 把 ops 表交给父类,
+ * 之后填子类自己的硬件资源, 最后调 platform 层把外设拉起来.
  *
  * platform_gpio_write(pin, !on_level) 在 init 末尾把灯先关掉
  * (避免上电瞬间灯就亮个莫名其妙).
  */
-void led_gpio_init(struct led_gpio *me, const char *name,
-		   uint8_t pin, bool on_level)
+int led_gpio_init(struct led_gpio *me, const char *name,
+                  uint8_t pin, bool on_level)
 {
-	me->base.ops   = &gpio_ops;
-	me->base.name  = name;
-	me->base.is_on = false;
-	me->pin        = pin;
-	me->on_level   = on_level;
-
+	int rc;
+	if (!me)
+		return -1;
+	rc = led_base_init(&me->base, name, &gpio_ops);
+	if (rc != 0)
+		return rc;
+	me->pin = pin;
+	me->on_level = on_level;
 	platform_gpio_init(pin, GPIO_MODE_OUTPUT);
 	platform_gpio_write(pin, !on_level);    /* 上电先关灯 */
+	return 0;
 }
 
 /* ============== 子类二: PWM LED ============== */
@@ -112,14 +119,20 @@ static const struct led_ops pwm_ops = {
 	.off = pwm_off,
 };
 
-void led_pwm_init(struct led_pwm *me, const char *name,
-		  uint8_t channel, uint8_t duty)
+int led_pwm_init(struct led_pwm *me, const char *name,
+                 uint8_t channel, uint8_t duty)
 {
-	me->base.ops   = &pwm_ops;
-	me->base.name  = name;
-	me->base.is_on = false;
-	me->channel    = channel;
-	me->duty       = duty;
+	int rc;
+	if (!me)
+		return -1;
+	if (duty > 100)
+		return -2;
+	rc = led_base_init(&me->base, name, &pwm_ops);
+	if (rc != 0)
+		return rc;
+	me->channel = channel;
+	me->duty = duty;
+	return 0;
 }
 
 /* ============== 子类三: I2C 扩展芯片 LED ============== */
@@ -147,12 +160,16 @@ static const struct led_ops i2c_ops = {
 	.off = i2c_off,
 };
 
-void led_i2c_init(struct led_i2c *me, const char *name,
-		  uint8_t bus, uint8_t addr)
+int led_i2c_init(struct led_i2c *me, const char *name,
+                 uint8_t bus, uint8_t addr)
 {
-	me->base.ops   = &i2c_ops;
-	me->base.name  = name;
-	me->base.is_on = false;
-	me->bus        = bus;
-	me->addr       = addr;
+	int rc;
+	if (!me)
+		return -1;
+	rc = led_base_init(&me->base, name, &i2c_ops);
+	if (rc != 0)
+		return rc;
+	me->bus = bus;
+	me->addr = addr;
+	return 0;
 }

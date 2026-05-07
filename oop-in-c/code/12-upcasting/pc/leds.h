@@ -29,6 +29,6 @@ extern struct led_base *g_led_error;
 extern struct led_base *g_led_status;
 extern struct led_base *g_led_network;
 
-void board_init(void);
+int board_init(void);
 
 #endif /* LEDS_H */

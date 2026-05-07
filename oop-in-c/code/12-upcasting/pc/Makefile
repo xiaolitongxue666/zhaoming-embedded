@@ -4,7 +4,7 @@ CC      = gcc
 CFLAGS  = -Wall -Wextra -std=c99 -I../../common
 TARGET  = demo
 
-SRCS    = main.c led.c board_init.c ../../common/platform_pc.c
+SRCS    = main.c led.c led_base.c board_init.c ../../common/platform_pc.c
 
 .PHONY: all clean run
 
