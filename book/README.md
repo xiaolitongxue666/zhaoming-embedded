@@ -21,10 +21,10 @@
 
 ## 这本书的特点
 
-1. **不实操也能完全理解**：每个 `static`、每个指针、每个 `container_of` 都讲到不开 IDE 也能 follow。**有经验的工程师扫读一遍就懂，不用动手**
-2. **三套代码并行**：核心代码在 PC、STM32、Linux 用户态都能跑，每章末贴 STM32 HAL 等效片段和 Linux 用户态等效片段
-3. **真实工业代码做案例**：第五部分两章基于工业控制板真实项目
-4. **代码 100% 跑通**：每章配套代码包过 `gcc -Wall -Wextra` 0 警告
+1. **不实操也能完全理解**：每个 `static`、每个指针、每个 `container_of` 都讲到不开 IDE 也能 follow。有经验的工程师扫读一遍就懂，不用动手
+2. **三套代码并行**：前 18 章教学包在 PC 上直接 `gcc` 跑通（零硬件门槛），第五部分配套 Zephyr v3.7.0 LTS 工程（参考板 stm32f4_disco）和 Linux 6.6 主线工程（参考板 Raspberry Pi 4B），有板子能上板，没板子读源也成立
+3. **直接读 upstream**：第五部分两章贴的代码段全部从 Zephyr / Linux 上游源码 read 出来，读者能 git clone 字面对照，不是脱敏代码
+4. **教学包代码 0 警告**：前 18 章每章配套代码包过 `gcc -Wall -Wextra` 0 警告
 5. **Linux 内核风格**：tab 缩进、`struct led` 而非 `Led_t`，读完看 Linux 内核源码不陌生
 
 ## 全书目录
@@ -63,7 +63,7 @@
 17. [4000 万行一招写完 · 链接自动初始化](04-工程威力/17-initcall.md)
 18. [全书地图回顾 · 一颗 LED 走过的演化路径](04-工程威力/18-全书地图.md)
 
-**第五部分 · 工业实战**
+**第五部分 · 开源工程实战**
 
 19. [Zephyr 实战 · 用前 18 章的眼睛读 driver subsystem](05-工业实战/19-主控案例.md)
 20. [Linux 实战 · 写一个自己的内核驱动](05-工业实战/20-子控案例.md)
@@ -76,9 +76,11 @@
 
 [尾声·致读者](尾声-致读者.md)
 
-## 配套资源
+## 配套代码
 
-完整代码：[oop-in-c/code/](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/) 目录下，每章一个独立目录。跑代码三步：
+三套独立工程，按章节挂钩：
+
+**教学包**（前 18 章 · 零硬件门槛 · PC 直接跑）
 
 ```bash
 cd oop-in-c/code/01-three-leds/pc
@@ -86,7 +88,27 @@ make
 ./demo
 ```
 
-无开发板也能学，所有代码都通过 `platform.h` 抽象 GPIO，PC 上用 printf 模拟。
+[oop-in-c/code/](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/) 目录下，每章一个独立目录。所有代码通过 `platform.h` 抽象 GPIO，PC 上用 printf 模拟，无开发板也能学。
+
+**Zephyr 工程**（ch19 + 附录 B · 参考板 stm32f4_disco · Zephyr v3.7.0 LTS）
+
+```bash
+cd industrial-zephyr
+west build -b stm32f4_disco -p auto -- -DDEMO=1
+west flash
+```
+
+[industrial-zephyr/](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/industrial-zephyr/) freestanding application 模板，4 个 demo 切换：4 颗 LED 跑马灯 / device tree overlay / CONTAINER_OF / 可空 ops。读者按 Zephyr 官方 Getting Started 装好 SDK + zephyr/ 源即可。
+
+**Linux 工程**（ch20 + 附录 C · 参考板 Raspberry Pi 4B · Linux 6.6 主线）
+
+```bash
+cd industrial-linux/ch20-leds-status
+make
+sudo insmod leds-status.ko
+```
+
+[industrial-linux/](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/industrial-linux/) 含读者亲手写的内核驱动 `leds-status.c`、用户态 libgpiod 对照 demo、QEMU + gdb 看 container_of、ftrace 追踪 module_init 四个独立子目录。
 
 ## 关注作者
 
