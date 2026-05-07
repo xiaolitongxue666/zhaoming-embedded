@@ -306,7 +306,7 @@ static int gpio_on(struct led_base *me)
 
 ### 10.6.4 视频版与配套代码版字段差异说明
 
-差异原则详见 preface「配套代码 vs 视频版」。下面是本章具体差异。
+差异原则详见前言「配套代码 vs 视频版」。下面是本章具体差异。
 
 视频 EP15 里 ops 表字段是 `on / off / set_brightness`（视频画面里能看到 PWM 调亮度的演示）。本章配套代码 `oop-in-c/code/10-vptr/` 用的是 `on / off / toggle`，和第 9 章配套代码字段保持一致。
 
