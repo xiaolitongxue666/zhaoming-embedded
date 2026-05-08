@@ -104,7 +104,7 @@ static struct s3_led_base *g_led_status;
 static const struct s3_led_ops gpio_ops = { .on = s3_gpio_on };
 static const struct s3_led_ops pwm_ops  = { .on = s3_pwm_on };
 
-static void s4_board_init(void)
+static void s4_led_board_init(void)
 {
 	g_gpio.base.ops  = &gpio_ops;
 	g_gpio.base.name = "RED";
@@ -145,8 +145,8 @@ int main(void)
 	s3_led_on(&g.base);
 	s3_led_on(&p.base);
 
-	printf("\n[stage 4] ch12-ch15 - upcasting + handle + board_init\n");
-	s4_board_init();
+	printf("\n[stage 4] ch12-ch15 - upcasting + handle + led_board_init\n");
+	s4_led_board_init();
 	s3_led_on(g_led_red);
 	s3_led_on(g_led_status);
 

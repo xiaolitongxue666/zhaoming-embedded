@@ -125,7 +125,7 @@ static const struct platform_pin_ops _stm32_pin_ops = {
 	.get   = _stm32_pin_get,
 };
 
-/* 启动期由 board_init 调一次. 真机工程在 main / SystemInit 之后调 */
+/* 启动期由 platform_init 调一次. 真机工程在 main / SystemInit 之后调 */
 void platform_hw_pin_init(void)
 {
 #if defined(__HAL_RCC_GPIOA_CLK_ENABLE)

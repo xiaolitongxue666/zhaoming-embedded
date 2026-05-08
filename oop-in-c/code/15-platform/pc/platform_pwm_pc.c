@@ -8,7 +8,7 @@
  * 不动, 跨平台跑同一个 platform_pwm dispatch.
  *
  * 落地形态: 一张 static const struct platform_pwm_ops 表 + 一个启动期
- * 注册函数 platform_pc_pwm_init, 由 board_init 调一次.
+ * 注册函数 platform_pc_pwm_init, 由 platform_init 调一次.
  */
 
 #include "platform/platform_pwm.h"
@@ -38,7 +38,7 @@ static const struct platform_pwm_ops pc_pwm_ops = {
 	.set_duty = _pc_pwm_set_duty,
 };
 
-/* 启动期注册 PC pwm ops. board_init 调一次. */
+/* 启动期注册 PC pwm ops. platform_init 调一次. */
 void platform_pc_pwm_init(void)
 {
 	(void)platform_pwm_register(&pc_pwm_ops);

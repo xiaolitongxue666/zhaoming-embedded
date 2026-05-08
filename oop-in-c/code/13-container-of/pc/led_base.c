@@ -21,7 +21,7 @@
  * 等) 里, 父类层一字不变.
  */
 
-#include "led.h"
+#include "led_base.h"
 #include <assert.h>
 #include <stdio.h>
 
@@ -65,9 +65,14 @@ int led_set_brightness(struct led_base *me, uint8_t brightness)
 {
 	if (!me || !me->ops)
 		return -1;
-	/* set_brightness 是选填字段, 子类没实现就走父类默认行为
-	 * (这里默认 = 安静返回 0). */
-	if (!me->ops->set_brightness)
+	/* set_brightness 是选填字段, 子类没实现就走父类默认行为.
+	 * 父类默认行为 = 打一行 "no dimming, skip" 提示 + 返回 0,
+	 * 跟 ch14 § 14.3 选填策略一字对齐. ch14 / ch15 的 led_base.c
+	 * 这一段一字不变. */
+	if (!me->ops->set_brightness) {
+		printf("  [%s] no dimming, skip (brightness=%u)\n",
+		       me->name, (unsigned)brightness);
 		return 0;
+	}
 	return me->ops->set_brightness(me, brightness);
 }

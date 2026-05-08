@@ -21,13 +21,14 @@
  * assert 在调试构建里 abort 把"忘填"立刻暴露在调试期, Release 构建定义
  * 了 NDEBUG, assert 编译产物消失, 0 运行时开销.
  *
- * 第三种策略 "全必填·接口" 由 sensor.c 演示 -- 那是另一条独立 base 线,
- * 跟 led_base 不混. 见 ch14 § 14.4.
+ * 第三种策略 "全必填·接口" 由 sensor_base.c 演示 -- 那是另一条独立
+ * base 线 (sensor_base.h + sensor_temp.h), 跟 led_base 不混.
+ * 见 ch14 § 14.4.
  *
  * 见 ch14 § 14.2 / § 14.3 / § 14.7.1 (release 构建里的双层防线).
  */
 
-#include "led.h"
+#include "led_base.h"
 #include <assert.h>
 #include <stdio.h>
 

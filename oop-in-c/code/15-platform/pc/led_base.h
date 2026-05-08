@@ -58,7 +58,7 @@ struct led_base {
  * 一次性存到 me 字段, 顺手把 is_on 置成 false (上电默认灭).
  *
  * 返回 0 表示成功, -1 表示参数非法 (任意一个指针为 NULL). 子类 init
- * 拿到返回值要往外传, board_init 那一层才能在出错时立刻知道哪盏灯
+ * 拿到返回值要往外传, led_board_init 那一层才能在出错时立刻知道哪盏灯
  * 没初始化好.
  */
 int led_base_init(struct led_base *me, const char *name,

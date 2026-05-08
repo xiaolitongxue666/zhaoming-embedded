@@ -80,7 +80,7 @@ static void _nxp_pin_write(int32_t pin, int32_t value)
 
 类型 (`GPIO_TypeDef *` vs `GPIO_Type *`)、寄存器 API 名字 (`HAL_GPIO_WritePin` vs `GPIO_PinWrite`)、PWM 引擎 (TIM3 vs eFlexPWM PWM1)、I2C 引擎 (HAL `I2C` vs LPI2C) 是两家厂家的差异。这种厂家差异如果漏到 `drivers/led/led_gpio.c` / `led_pwm.c` / `led_i2c.c`, 换 MCU 要改三个子类 + 板级 + 应用层 -- ch15 的金句"换硬件不改应用"就破了。
 
-`platform/arch/<mcu>/{pin,pwm,i2c}_board.c` 这一层就是为了把这种厂家差异收拢到一组三份文件里。板级启动序列也是一字对照: `board_init` 里依次调 `platform_hw_pin_init() -> platform_hw_pwm_init() -> platform_hw_i2c_init()` 三行, STM32 / NXP 两家板级代码这三行完全一样, 改的只是链接的 `arch/stm32/` 还是 `arch/nxp/` 子目录里那 3 份后端。
+`platform/arch/<mcu>/{pin,pwm,i2c}_board.c` 这一层就是为了把这种厂家差异收拢到一组三份文件里。板级启动序列也是一字对照: `platform_init` 里依次调 `platform_hw_pin_init() -> platform_hw_pwm_init() -> platform_hw_i2c_init()` 三行, STM32 / NXP 两家板级代码这三行完全一样, 改的只是链接的 `arch/stm32/` 还是 `arch/nxp/` 子目录里那 3 份后端。LED 模块自己的硬件参数走 `led_board_init`, 跟 platform 注册分两层职责。
 
 ## `pc/` 是什么·跑什么
 

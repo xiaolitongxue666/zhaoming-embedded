@@ -11,7 +11,7 @@
 #ifndef LED_PWM_H
 #define LED_PWM_H
 
-#include "led.h"
+#include "led_base.h"
 
 /* PWM 子类: 三件套全填 */
 struct led_pwm {

@@ -10,7 +10,7 @@
 #ifndef LED_I2C_H
 #define LED_I2C_H
 
-#include "led.h"
+#include "led_base.h"
 
 struct led_i2c {
 	struct led_base base;

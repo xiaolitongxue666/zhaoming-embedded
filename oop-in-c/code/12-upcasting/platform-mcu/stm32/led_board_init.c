@@ -1,15 +1,15 @@
 /* SPDX-License-Identifier: MIT */
 /*
- * board_init.c - STM32 板级初始化片段 (BSP 核心)
+ * led_board_init.c - STM32 LED 模块板级配置片段 (BSP 核心)
  *
  * 这是片段, 不是完整工程. 完整 STM32 工程见附录 B.
  *
- * 跟 pc/board_init.c 99% 一致, 唯一差别: GPIO 子类的 pin 参数从 PC 版的
+ * 跟 pc/led_board_init.c 99% 一致, 唯一差别: GPIO 子类的 pin 参数从 PC 版的
  * 占位 10 换成真实板子上的 PIN_NUM('A', 13). 子类 init / 句柄绑定 /
  * 全局句柄声明全部一字不改.
  *
  * 换板子 (LED 接到 PD.12 而不是 PA.13) 只需改这一行 pin 参数, main.c /
- * led.c / led_*.c 一字不动. 这就是 board_init.c 的工程意义.
+ * led_base.c / led_*.c 一字不动. 这就是 led_board_init.c 的工程意义.
  */
 
 #include "leds.h"
@@ -18,7 +18,7 @@
 #include "led_i2c.h"
 #include "platform.h"
 
-/* 子类对象 - 文件作用域 + static, 外部不可见 (见 pc/board_init.c 注释). */
+/* 子类对象 - 文件作用域 + static, 外部不可见 (见 pc/led_board_init.c 注释). */
 static struct led_gpio s_led_err;
 static struct led_pwm  s_led_status;
 static struct led_i2c  s_led_net;
@@ -29,7 +29,7 @@ struct led_base *g_led_error;
 struct led_base *g_led_status;
 struct led_base *g_led_network;
 
-int board_init(void)
+int led_board_init(void)
 {
 	int rc;
 

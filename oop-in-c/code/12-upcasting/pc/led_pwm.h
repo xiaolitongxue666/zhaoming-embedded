@@ -12,7 +12,7 @@
 #ifndef LED_PWM_H
 #define LED_PWM_H
 
-#include "led.h"
+#include "led_base.h"
 
 struct led_pwm {
 	struct led_base base;       /* 父类, 第 0 字段 */

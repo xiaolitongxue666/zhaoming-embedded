@@ -35,9 +35,9 @@ int main(void)
 	printf("  one led_base * handle, any subclass\n");
 	printf("=========================================\n");
 
-	rc = board_init();
+	rc = led_board_init();
 	if (rc != 0) {
-		printf("board_init failed, rc=%d\n", rc);
+		printf("led_board_init failed, rc=%d\n", rc);
 		return rc;
 	}
 

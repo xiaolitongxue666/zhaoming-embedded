@@ -6,7 +6,7 @@ ch16 是工程哲学章, 主题是"Linux 内核 gpio_chip 子系统的骨架". p
 做法是：
 
 1. 把 vendor_a_set / vendor_b_set 里的 printf 替换成真实的 BSRR 写入。
-2. board_init 期间调一次 vendor_a_probe / vendor_b_probe（或用 ch17 的
+2. 启动期（板级 init 流程里）调一次 vendor_a_probe / vendor_b_probe（或用 ch17 的
    initcall 自动注册）。
 3. 应用层 / leds_gpio 驱动 0 修改。
 

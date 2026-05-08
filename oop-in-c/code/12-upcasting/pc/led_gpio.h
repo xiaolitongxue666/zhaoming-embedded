@@ -14,7 +14,7 @@
 #ifndef LED_GPIO_H
 #define LED_GPIO_H
 
-#include "led.h"
+#include "led_base.h"
 
 /*
  * GPIO LED 子类: 一个 GPIO 引脚拉高 (或拉低) 点亮.

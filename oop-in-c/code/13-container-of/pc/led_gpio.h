@@ -14,15 +14,16 @@
 #ifndef LED_GPIO_H
 #define LED_GPIO_H
 
-#include "led.h"
+#include "led_base.h"
 
 /*
  * GPIO 子类: base 故意不放第一个位置 (教学变形, 仅本章演示).
  *
  * magic 字段挡在 base 前面, 让 offsetof(struct led_gpio, base) != 0.
- * struct led_base 第一个成员是指针 (4 字节对齐), 编译器会在 magic
- * 后面塞 2 字节 padding, base 落到偏移 4. 运行时 demo 会打印
- * "offsetof(...,base) = 4" 验证.
+ * struct led_base 第一个成员是指针 (32-bit 平台 4 字节对齐, 64-bit 平台
+ * 8 字节对齐), 编译器在 magic 后面塞 padding, base 落到 magic 之后.
+ * 具体偏移看运行时 demo 打印的 "offsetof(...,base) = N" -- 32-bit 平台
+ * 是 4, 64-bit 平台是 8. 关键是 != 0, 用来证明 container_of 位置无关.
  */
 struct led_gpio {
 	uint16_t        magic;     /* 故意挡在前面, 让 base 偏移不为 0 */

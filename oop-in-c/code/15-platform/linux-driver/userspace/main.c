@@ -9,7 +9,7 @@
  *
  * 唯一差别: GPIO 子类构造接受 struct gpiod_chip *, PWM 子类构造接受
  * pwmchip / pwm_num, I2C 子类构造接受 bus / addr -- 这些是"哪条线"
- * 信息, 跟 board_init 写在哪份文件里无关.
+ * 信息, 跟 led_board_init 写在哪份文件里无关.
  *
  * 真机跑 (树莓派 4B 默认 device tree, 默认 /dev/gpiochip0 是 BCM GPIO):
  *   sudo ./demo

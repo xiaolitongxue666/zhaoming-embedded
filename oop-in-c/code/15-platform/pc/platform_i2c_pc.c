@@ -10,11 +10,12 @@
  * 落地形态:
  *   pc_i2c_bus       static struct platform_i2c_bus_device 一个槽
  *   pc_i2c_bus_ops   static const struct platform_i2c_bus_device_ops 一张表
- *   platform_pc_i2c_init  启动期由 board_init 调一次, 把 ops 注册进
+ *   platform_pc_i2c_init  启动期由 platform_init 调一次, 把 ops 注册进
  *                         platform/platform_i2c.c 的 dispatcher
  *
- * 装配: board_init 先调 platform_pc_i2c_init 注册好 bus, 再调
- * platform_i2c_bus_get 拿到 bus 句柄, 喂给 led_i2c_init 装进 client.bus.
+ * 装配: platform_init 先调 platform_pc_i2c_init 注册好 bus, 之后
+ * led_board_init 调 platform_i2c_bus_get 拿到 bus 句柄, 喂给
+ * led_i2c_init 装进 client.bus.
  *
  * 输出格式:
  *   [I2C] addr=0x3C W len=2 data=00 01
@@ -55,7 +56,7 @@ static const struct platform_i2c_bus_device_ops pc_i2c_bus_ops = {
 
 static struct platform_i2c_bus_device pc_i2c_bus;
 
-/* 启动期注册 PC i2c bus. board_init 调一次. */
+/* 启动期注册 PC i2c bus. platform_init 调一次. */
 void platform_pc_i2c_init(void)
 {
 	(void)platform_i2c_bus_register(&pc_i2c_bus, &pc_i2c_bus_ops);

@@ -102,7 +102,7 @@ static const struct platform_pin_ops _nxp_pin_ops = {
 	.get   = _nxp_pin_get,
 };
 
-/* 启动期由 board_init 调一次. MCUXpresso BOARD_InitPins / BOARD_BootClockRUN
+/* 启动期由 platform_init 调一次. MCUXpresso BOARD_InitPins / BOARD_BootClockRUN
  * 已经做完 mux + clock, 这里只把 ops 注册到 dispatcher. */
 void platform_hw_pin_init(void)
 {

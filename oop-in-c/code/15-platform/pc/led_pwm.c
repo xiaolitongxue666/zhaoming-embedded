@@ -7,7 +7,7 @@
  *
  * 子类只调 platform_pwm_xxx ops 表层接口 (platform_pwm_enable /
  * platform_pwm_disable / platform_pwm_set_duty), 永远不直接碰 PWM 寄存器.
- * platform_pwm dispatcher 启动期由 board_init 调 platform_pc_pwm_init
+ * platform_pwm dispatcher 启动期由 platform_init 调 platform_pc_pwm_init
  * 注册 PC 后端, STM32 端在 platform/arch/stm32/pin_board.c 里注册 HAL 后端.
  * 同一份 led_pwm.c 在 PC、STM32、NXP 上字节级不动. 见 ch15 § 15.11.5.
  */

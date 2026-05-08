@@ -12,7 +12,7 @@
  * container_of 替掉强转.
  *
  * 跟 pc/ 唯一的差别: 把 printf 模拟换成真实 HAL 操作. 应用层 / 父类 /
- * 子类签名 / board_init.c 一字不改.
+ * 子类签名 / led_board_init.c 一字不改.
  *
  * pin 编码 (uint8_t 同时表示 port + pin 号) 跟 ch01 platform-mcu/stm32/
  * 字节级一致, 见 oop-in-c/code/common/platform.h 的 PIN_NUM 宏.

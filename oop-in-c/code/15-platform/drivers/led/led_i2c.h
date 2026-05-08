@@ -8,7 +8,7 @@
  * 这一份相比 ch15 早期教学版升级到 bus + client 二层接口, 和 industrial/
  * platform_layer/ 工业版签名对齐. 子类内嵌 struct platform_i2c_client
  * 持有 bus 句柄 + 自家 7-bit 地址; led_i2c_init 接受 bus 参数显式传入,
- * 启动期 (board_init / platform/arch/<mcu>/pin_board.c) 把 bus 注册好后
+ * 启动期 (platform_init / platform/arch/<mcu>/pin_board.c) 把 bus 注册好后
  * 才能调本子类构造.
  *
  * 不实现 set_brightness, 走父类默认 no-op.

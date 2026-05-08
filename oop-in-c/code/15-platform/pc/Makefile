@@ -10,7 +10,8 @@ TARGET  = demo
 
 SRCS    = main.c app.c \
           led_base.c led_gpio.c led_pwm.c led_i2c.c \
-          board_init.c \
+          led_board_init.c \
+          platform_init.c \
           platform_pwm_pc.c platform_i2c_pc.c \
           ../platform/platform_pwm.c ../platform/platform_i2c.c \
           ../../common/platform_pc.c

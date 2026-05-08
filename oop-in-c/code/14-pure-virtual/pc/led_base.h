@@ -1,24 +1,36 @@
 /* SPDX-License-Identifier: MIT */
 /**
  * @file  led_base.h
- * @brief led_base 字段集 + 共有 init (ch14 版, 沿用 ch10/ch13 一字不变)
+ * @brief 父类层公开头 - 字段集 + ops 表 + 共有 init + 父类统一接口 (ch14 版)
  *
  * @details
- * 字段集跟 ch10/ch11/ch13 一字不变. 这一章把父类统一接口
- * (led_on / led_off / led_set_brightness) 搬到了 led_base.c 里跟
- * led_base_init 同住 -- 父类层负责的"必填 + 选填"两种 NULL 处理策略
- * 都集中到一个文件里看清楚. led_base 字段集本身没动:
+ * 父类层公开头, 跟 ch11 / ch12 / ch13 一脉相承的"集中点":
+ *   - struct led_base 字段集 (ops + name + is_on)
+ *   - struct led_ops  操作表字段集 (必填 on/off + 选填 set_brightness)
+ *   - led_base_init   共有 init, 子类 init 第一行调一次
+ *   - led_on/led_off/led_set_brightness  父类统一接口 (必填 + 选填混合策略)
  *
- *     struct led_base {
- *         const struct led_ops *ops;     // 第 0 字段
- *         const char           *name;
- *         bool                  is_on;
+ * ch14 主线是"虚函数不实现 · 三种策略", 三个字段对应三种用法:
+ *
+ *     struct led_ops {
+ *         int (*on)(struct led_base *me);                 // 必填
+ *         int (*off)(struct led_base *me);                // 必填
+ *         int (*set_brightness)(struct led_base *me,      // 选填
+ *                               uint8_t brightness);
  *     };
  *
- * 子类 init (led_gpio_init / led_pwm_init) 第一行调 led_base_init, 把
- * "我用哪张 ops 表"作为常量参数传进来, 一次填好.
+ * ops 表字段类型本身不变 (普通函数指针). "必填还是选填"这条纪律落在
+ * 父类统一接口里 (见 led_base.c). 子类填了走子类, 没填: 必填的崩,
+ * 选填的走默认. GPIO 子类故意只填 on/off, 不填 set_brightness, 演示
+ * 选填策略. PWM 子类三件套全填.
  *
- * 见 ch14 § 14.2 (必填) / § 14.3 (选填).
+ * 子类实现里 (gpio_on / pwm_on / ...) 用 ch13 学的 container_of 反推
+ * 子类指针, 强转那一招在 ch13 故意挪 base 演示后已经退役.
+ *
+ * 第三种策略 "全必填·接口" 由 sensor 这条独立 base 线演示 (sensor_base.h
+ * + sensor_temp.h), 跟 led_base 不混.
+ *
+ * 见 ch14 § 14.2 (必填) / § 14.3 (选填) / § 14.4 (全必填·接口).
  */
 
 #ifndef LED_BASE_H
@@ -26,11 +38,20 @@
 
 #include "platform.h"
 
+struct led_base;
+
 /*
- * 前向声明 - led_ops 完整定义在 led.h. led_base.h 只用到 const struct
- * led_ops * 指针类型, 不依赖字段集. 减少头文件耦合.
+ * struct led_ops - 操作表.
+ *
+ * on / off 必填, set_brightness 选填. 三种字段类型完全一样, 区别只
+ * 在父类统一接口里怎么处理 NULL.
  */
-struct led_ops;
+struct led_ops {
+	int (*on)(struct led_base *me);                 /* 必填 */
+	int (*off)(struct led_base *me);                /* 必填 */
+	int (*set_brightness)(struct led_base *me,      /* 选填 */
+	                      uint8_t brightness);
+};
 
 struct led_base {
 	const struct led_ops *ops;     /* 第 0 字段 */
@@ -46,5 +67,17 @@ struct led_base {
  */
 int led_base_init(struct led_base *me, const char *name,
                   const struct led_ops *ops);
+
+/* ============== 父类统一接口 (必填 + 选填) ==============
+ *
+ * 三个统一接口函数都接 base 指针. 函数体里走 me->ops->xxx(me), 那张
+ * 表是跟着 me 自己跑的. 应用层不用知道下面挂的是哪种 LED.
+ *
+ * led_on / led_off    -> 必填 (assert)
+ * led_set_brightness  -> 选填 (NULL 时父类默认行为)
+ */
+int led_on(struct led_base *me);
+int led_off(struct led_base *me);
+int led_set_brightness(struct led_base *me, uint8_t brightness);
 
 #endif /* LED_BASE_H */

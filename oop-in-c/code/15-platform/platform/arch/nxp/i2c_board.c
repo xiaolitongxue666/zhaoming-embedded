@@ -55,7 +55,7 @@ static const struct platform_i2c_bus_device_ops _nxp_i2c_ops = {
 /* 一条 i2c bus 实例. 教学版单 bus, 工业版按 bus_name 走 device 表挂多条. */
 static struct platform_i2c_bus_device _nxp_i2c_bus;
 
-/* 启动期由 board_init 调一次. 调用顺序: pin -> pwm -> i2c. */
+/* 启动期由 platform_init 调一次. 调用顺序: pin -> pwm -> i2c. */
 void platform_hw_i2c_init(void)
 {
 	(void)platform_i2c_bus_register(&_nxp_i2c_bus, &_nxp_i2c_ops);

@@ -12,7 +12,7 @@
 #ifndef LED_GPIO_H
 #define LED_GPIO_H
 
-#include "led.h"
+#include "led_base.h"
 
 /* GPIO 子类: 只填 on / off, 不支持调光 */
 struct led_gpio {

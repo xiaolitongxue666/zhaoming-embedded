@@ -11,7 +11,7 @@
  * 全部 0 命中. 应用层不认识硬件, 硬件是谁它都不问, 只通过 led_base *
  * 句柄调 led_on / led_off / led_set_brightness.
  *
- * 板级 (board_init.c) 同一时刻挂着 GPIO+PWM+I2C 三种不同硬件的子类,
+ * 板级 (led_board_init.c) 同一时刻挂着 GPIO+PWM+I2C 三种不同硬件的子类,
  * 应用层一个都不知道. 这就是"换硬件不改应用"在代码上的兑现.
  *
  * 见 ch15 § 15.5 应用层 + § 15.6 换硬件 diff.

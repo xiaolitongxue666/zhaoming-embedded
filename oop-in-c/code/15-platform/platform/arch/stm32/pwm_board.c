@@ -57,7 +57,7 @@ static const struct platform_pwm_ops _stm32_pwm_ops = {
 	.set_duty = _stm32_pwm_set_duty,
 };
 
-/* 启动期由 board_init 调一次. 调用顺序: pin -> pwm -> i2c. */
+/* 启动期由 platform_init 调一次. 调用顺序: pin -> pwm -> i2c. */
 void platform_hw_pwm_init(void)
 {
 	(void)platform_pwm_register(&_stm32_pwm_ops);
