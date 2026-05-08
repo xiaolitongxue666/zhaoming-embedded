@@ -471,12 +471,12 @@ void platform_gpio_write(uint8_t pin, bool value)
 
 ```c
 /* 假设 LED 接在 PA.13 / PA.14 / PA.15 */
-led_init(&red_led,   0x0D);   /* PA.13 */
-led_init(&green_led, 0x0E);   /* PA.14 */
-led_init(&blue_led,  0x0F);   /* PA.15 */
+led_init(&red_led,   PIN_NUM('A', 13));
+led_init(&green_led, PIN_NUM('A', 14));
+led_init(&blue_led,  PIN_NUM('A', 15));
 ```
 
-板子上 LED 改接到 PD.12，那就传 `0x3C`。`led.c` 一行不动，`main.c` 只动初始化参数。
+`PIN_NUM('A', 13)` 就是前面引入过的那个宏，编译期展开成 `0x0D`，板子上 LED 改接到 PD.12 就传 `PIN_NUM('D', 12)`。`led.c` 一行不动，`main.c` 只动初始化参数。
 
 注意一件事：`led.h`、`led.c` 一字不改。
 

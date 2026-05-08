@@ -194,8 +194,10 @@ C++ 把你手动写的前缀变成了编译器管理的类名（namespace 命名
 | 章节 | C 语言 | C++ |
 |---|---|---|
 | 第 1 章 | `struct + me` | `class + this` |
-| 第 2 章 | `static + /* private */ 纪律` | `private + public` |
+| 第 2 章 | `.h 声明` + `static + /* private */ 纪律` | `public + private` |
 | 第 3 章 | `前缀 + init/deinit` | `类名 + 构造/析构` |
+
+第 2 章那一行展开看：`.h` 里声明的函数（`led_init / led_on / led_off / ...`）等同 C++ 的 `public:`；`.c` 里加 `static` 的工具函数 + struct 字段挂 `/* private */` 的命名纪律，等同 C++ 的 `private:`。一份 C 模块用 `.h / .c` 分离 + `static` 锁 + 字段命名纪律三件事，做的就是 C++ public / private 关键字一字不差的事。
 
 C 没有 `class`？你天天都在写。
 

@@ -47,12 +47,12 @@ make
 应用层把 `led_init` 第二个参数改成 PIN 编码即可：
 
 ```c
-led_init(&red_led,   0x0D);   /* PA.13 */
-led_init(&green_led, 0x0E);   /* PA.14 */
-led_init(&blue_led,  0x0F);   /* PA.15 */
+led_init(&red_led,   PIN_NUM('A', 13));   /* PA.13 */
+led_init(&green_led, PIN_NUM('A', 14));   /* PA.14 */
+led_init(&blue_led,  PIN_NUM('A', 15));   /* PA.15 */
 ```
 
-板子上 LED 接到 PD.12，那就传 `0x3C`。`led.c` 一行不动。
+板子上 LED 接到 PD.12，那就传 `PIN_NUM('D', 12)`。`led.c` 一行不动。
 
 ## Linux 用户态完整工程
 

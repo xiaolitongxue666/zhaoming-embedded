@@ -94,11 +94,11 @@ static void _enable_port_clock(uint8_t pin)
  * 应用层调用方式 (在 main.c 里):
  *
  *   struct led red_led;
- *   led_init(&red_led, 0x0D);   <-- PA.13
- *   led_on(&red_led);           <-- 和 PC 版完全一样
+ *   led_init(&red_led, PIN_NUM('A', 13));   <-- PA.13
+ *   led_on(&red_led);                       <-- 和 PC 版完全一样
  *
- * pin = 0x0D / 0x0E / 0x0F 分别对应 PA.13 / PA.14 / PA.15.
- * 板子上 LED 接到别的 port 就传不同编码 (例 PD.12 = 0x3C),
+ * PIN_NUM('A', 13/14/15) 分别对应 PA.13 / PA.14 / PA.15.
+ * 板子上 LED 接到别的 port 就传 PIN_NUM('D', 12) 这种,
  * led.c / main.c 一行不动.
  */
 
