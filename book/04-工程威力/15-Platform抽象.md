@@ -1193,7 +1193,7 @@ Platform 抽象层是工具, 不是工业级的标志. 看到一份 Linux 应用
 
 **资源极紧但仍想用这套思想**, 不要自己手写 platform 层. clone Zephyr 或 RT-Thread, 把它们的 driver framework 拔下来直接用 -- driver 注册机制 + ops 表 + device tree 解析这一坨, Zephyr / RT-Thread 已经写了十几年, 上万种硬件验证过, 比你三周自抽出来的 ops 表稳得多. 你拔下来用就完了, 自己写一份是没意义的.
 
-**这本书 stm32_full 工程那一份 platform 层是教学示范.** 让读者建立认知 -- 看清 platform 抽象长什么样、ops 表怎么挂、register 机制怎么落. 真实工程里, 这一份你别自己写, 去用 Zephyr / RT-Thread.
+**这本书 ch15 配套代码 (`oop-in-c/code/15-platform/`) 那一份 platform 层是教学示范.** 让读者建立认知 -- 看清 platform 抽象长什么样、ops 表怎么挂、register 机制怎么落. 真实工程里, 这一份你别自己写, 去用 Zephyr / RT-Thread.
 
 **MPU / SoC 平台直接用 Linux**. 跑得起 Linux 内核的硬件, driver model + bus 框架 + device tree + sysfs / udev 全套完整, 你 ch16 / 附录 C 看到的就是工业级原型. 应用层走 libgpiod / iio / spidev, 内核驱动写在 driver_model 里, 全平台都不用自己抽 platform 层.
 

@@ -1,9 +1,9 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /*
  * led_gpio.c - LED GPIO 子类 STM32 端真机实现
  *
  * 这是子类内部的 STM32 真机版本 (片段, 不是完整工程). 完整 STM32 工程
- * 见附录 B (industrial/stm32_full).
+ * 见附录 B (Zephyr v3.7.0 LTS · stm32f4_disco).
  *
  * 父类 led_on / led_off / led_toggle 写在 led_base.c, 子类实现 (gpio_on)
  * 直接调 platform_gpio_write. 跟 pc/ 唯一的差别就在这个文件: 把 printf
@@ -127,7 +127,7 @@ static int gpio_toggle(struct led_base *me)
 	return gpio_on(me);
 }
 
-const struct led_ops led_ops_gpio = {
+static const struct led_ops led_ops_gpio = {
 	.on     = gpio_on,
 	.off    = gpio_off,
 	.toggle = gpio_toggle,

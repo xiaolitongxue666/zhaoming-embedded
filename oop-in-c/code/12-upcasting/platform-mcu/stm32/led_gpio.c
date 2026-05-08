@@ -1,9 +1,9 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /*
  * led_gpio.c - LED GPIO 子类 STM32 端真机实现 (ch12 版)
  *
  * 这是子类内部的 STM32 真机版本 (片段, 不是完整工程). 完整 STM32 工程
- * 见附录 B (industrial/stm32_full).
+ * 见附录 B (Zephyr v3.7.0 LTS · stm32f4_disco).
  *
  * gpio_on / gpio_off 函数签名都是 (struct led_base *me) -- 父类统一接口
  * led_on(base) 透过 ops 指针跳过来时, 拿到的是 base 指针. 函数体里
@@ -125,7 +125,7 @@ static int gpio_off(struct led_base *me)
 	return 0;
 }
 
-const struct led_ops led_ops_gpio = {
+static const struct led_ops led_ops_gpio = {
 	.on  = gpio_on,
 	.off = gpio_off,
 };

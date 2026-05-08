@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /*
  * led_gpio.h - GPIO LED 子类 (ch14 版, 选填策略示例)
  *
@@ -24,6 +24,5 @@ struct led_gpio {
 int led_gpio_init(struct led_gpio *me, const char *name,
                   uint8_t pin, bool on_level);
 
-extern const struct led_ops led_ops_gpio;
 
 #endif /* LED_GPIO_H */

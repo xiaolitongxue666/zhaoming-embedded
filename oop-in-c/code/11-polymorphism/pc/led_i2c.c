@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /**
  * @file  led_i2c.c
  * @brief I2C 子类 init + 实现层 + led_ops_i2c 操作表
@@ -14,6 +14,8 @@
 
 #include "led_i2c.h"
 #include <stdio.h>
+
+static const struct led_ops led_ops_i2c;
 
 int led_i2c_init(struct led_i2c *me, const char *name,
                  uint8_t dev_addr, uint8_t reg)
@@ -56,7 +58,7 @@ static int i2c_toggle(struct led_base *me)
 	return i2c_on(me);
 }
 
-const struct led_ops led_ops_i2c = {
+static const struct led_ops led_ops_i2c = {
 	.on     = i2c_on,
 	.off    = i2c_off,
 	.toggle = i2c_toggle,

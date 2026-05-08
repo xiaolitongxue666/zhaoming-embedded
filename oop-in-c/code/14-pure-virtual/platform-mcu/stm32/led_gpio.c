@@ -1,9 +1,9 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /*
  * led_gpio.c - LED GPIO 子类 STM32 端真机实现 (ch14 版)
  *
  * 这是子类内部的 STM32 真机版本 (片段, 不是完整工程). 完整 STM32 工程
- * 见附录 B (industrial/stm32_full).
+ * 见附录 B (Zephyr v3.7.0 LTS · stm32f4_disco).
  *
  * GPIO 子类故意只填 on / off (不支持调光), 走父类 led_set_brightness 的
  * 默认行为 (打印 "no dimming, skip"). 这是 ch14 选填策略的演示点.
@@ -126,7 +126,7 @@ static int gpio_off(struct led_base *me)
 
 /* set_brightness 故意不填: GPIO 不支持调光, 走父类默认行为 (打印 "no
  * dimming, skip"). 这是 ch14 选填策略的演示点. */
-const struct led_ops led_ops_gpio = {
+static const struct led_ops led_ops_gpio = {
 	.on  = gpio_on,
 	.off = gpio_off,
 };

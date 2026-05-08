@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /*
  * led_i2c.c - I2C 子类 init + 实现层 + led_ops_i2c 操作表 (ch13 版)
  *
@@ -28,7 +28,7 @@ static int i2c_off(struct led_base *me)
 	return 0;
 }
 
-const struct led_ops led_ops_i2c = {
+static const struct led_ops led_ops_i2c = {
 	.on  = i2c_on,
 	.off = i2c_off,
 	/* set_brightness 故意不填 -- I2C 简单 LED 也没有亮度概念 */

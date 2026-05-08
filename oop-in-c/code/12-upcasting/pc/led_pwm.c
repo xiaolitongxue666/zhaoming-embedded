@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /**
  * @file  led_pwm.c
  * @brief PWM 子类 init + 实现层 + led_ops_pwm 操作表 (ch12 版)
@@ -33,7 +33,7 @@ static int pwm_off(struct led_base *me)
 	return 0;
 }
 
-const struct led_ops led_ops_pwm = {
+static const struct led_ops led_ops_pwm = {
 	.on  = pwm_on,
 	.off = pwm_off,
 };

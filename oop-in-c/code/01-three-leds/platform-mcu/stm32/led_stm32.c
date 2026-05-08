@@ -22,7 +22,7 @@
  *   PD.12 = 0x3C    (port=3=D, num=12=0xC)
  *   PI.14 = 0x8E    (port=8=I, num=14=0xE)
  *
- * 这套编码和 industrial/stm32_full/app/platform/arch/board/pin_board.c
+ * 这套编码和 ch15 配套代码 oop-in-c/code/15-platform/platform/arch/stm32/pin_board.c
  * 字节级一致. ch01 这里先用最少的代码把"换 port + 换 pin"跑通,
  * 工业版多一层"PA.13 字符串 -> 0x0D 编码"的解析, 核心编码不变.
  */

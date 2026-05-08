@@ -1,9 +1,9 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /*
  * led_gpio.c - LED GPIO 子类 STM32 端真机实现
  *
  * 这是子类内部的 STM32 真机版本 (片段, 不是完整工程). 完整 STM32 工程
- * 见附录 B (industrial/stm32_full).
+ * 见附录 B (Zephyr v3.7.0 LTS · stm32f4_disco).
  *
  * 跟 pc/ 唯一的差别就在这个文件: pc/ 用 printf 模拟硬件动作, STM32 上
  * gpio_xxx 走 HAL_GPIO_WritePin. ops 表的形态、子类 init 的形态、父类

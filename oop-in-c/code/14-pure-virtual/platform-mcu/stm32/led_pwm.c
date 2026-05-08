@@ -1,9 +1,9 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /*
  * led_pwm.c - LED PWM 子类 STM32 端真机实现 (ch14 版)
  *
  * 这是子类内部的 STM32 真机版本 (片段, 不是完整工程). 完整 STM32 工程
- * 见附录 B (industrial/stm32_full).
+ * 见附录 B (Zephyr v3.7.0 LTS · stm32f4_disco).
  *
  * PWM 子类三件套全填 (on / off / set_brightness), 跟 GPIO 子类的"只填
  * on / off"形成 ch14 必填 / 选填策略对比.
@@ -77,7 +77,7 @@ static int pwm_set_brightness(struct led_base *me, uint8_t brightness)
 	return 0;
 }
 
-const struct led_ops led_ops_pwm = {
+static const struct led_ops led_ops_pwm = {
 	.on             = pwm_on,
 	.off            = pwm_off,
 	.set_brightness = pwm_set_brightness,

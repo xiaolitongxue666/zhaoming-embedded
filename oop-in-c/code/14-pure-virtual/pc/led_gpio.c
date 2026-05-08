@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /*
  * led_gpio.c - GPIO 子类 init + 实现层 + led_ops_gpio 操作表 (ch14 版)
  *
@@ -46,7 +46,7 @@ static int gpio_off(struct led_base *me)
  *   - 100 颗同类型 GPIO LED 共享同一张表
  *   - 链接期不可改, 防止运行时被踩成野指针
  */
-const struct led_ops led_ops_gpio = {
+static const struct led_ops led_ops_gpio = {
 	.on  = gpio_on,
 	.off = gpio_off,
 	/* set_brightness 故意不填 -- GPIO 灯没有亮度概念 */

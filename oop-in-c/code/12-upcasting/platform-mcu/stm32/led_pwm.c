@@ -1,9 +1,9 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /*
  * led_pwm.c - LED PWM 子类 STM32 端真机实现 (ch12 版)
  *
  * 这是子类内部的 STM32 真机版本 (片段, 不是完整工程). 完整 STM32 工程
- * 见附录 B (industrial/stm32_full).
+ * 见附录 B (Zephyr v3.7.0 LTS · stm32f4_disco).
  *
  * pwm_on / pwm_off 函数体里 (struct led_pwm *)me 强转回子类拿 channel /
  * duty 字段, 走真实 TIM PWM 寄存器. __HAL_TIM_SET_COMPARE 改 CCR 寄存器,
@@ -55,7 +55,7 @@ static int pwm_off(struct led_base *me)
 	return 0;
 }
 
-const struct led_ops led_ops_pwm = {
+static const struct led_ops led_ops_pwm = {
 	.on  = pwm_on,
 	.off = pwm_off,
 };

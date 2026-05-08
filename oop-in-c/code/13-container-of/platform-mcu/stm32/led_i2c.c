@@ -1,9 +1,9 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /*
  * led_i2c.c - LED I2C 子类 STM32 端真机实现 (ch13 版)
  *
  * 这是子类内部的 STM32 真机版本 (片段, 不是完整工程). 完整 STM32 工程
- * 见附录 B (industrial/stm32_full).
+ * 见附录 B (Zephyr v3.7.0 LTS · stm32f4_disco).
  *
  * I2C 子类 base 在第 0 字段, container_of 偏移为 0 编译器会把减法优化
  * 掉. 跟 GPIO 子类的 base 偏移 4 形成对比, container_of 一份代码两套
@@ -45,7 +45,7 @@ static int i2c_off(struct led_base *me)
 	return 0;
 }
 
-const struct led_ops led_ops_i2c = {
+static const struct led_ops led_ops_i2c = {
 	.on  = i2c_on,
 	.off = i2c_off,
 };

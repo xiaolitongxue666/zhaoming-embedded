@@ -1,13 +1,12 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /**
  * @file  led_gpio.h
  * @brief LED GPIO 子类 (ch12 版)
  *
  * @details
- * 子类 .h 只装三样东西: struct led_gpio 字段集 (base 在第 0 字段) +
- * 构造函数 led_gpio_init 声明 + ops 表 extern 声明. ops 表的实现
- * (gpio_on / gpio_off + gpio_ops 表) 全部锁在 led_gpio.c 内, 应用层
- * 永远碰不到 gpio_xxx 这一层.
+ * 子类 .h 只装两样东西: struct led_gpio 字段集 (base 在第 0 字段) +
+ * 构造函数 led_gpio_init 声明. ops 表 (gpio_on / gpio_off + gpio_ops
+ * 表) static 锁在 led_gpio.c 内, 应用层永远碰不到 gpio_xxx 这一层.
  *
  * 见 ch12 § 12.4 板级初始化 + § 12.6 换硬件方案三行改动.
  */
@@ -34,6 +33,5 @@ struct led_gpio {
 int led_gpio_init(struct led_gpio *me, const char *name,
                   uint8_t pin, bool on_level);
 
-extern const struct led_ops led_ops_gpio;
 
 #endif /* LED_GPIO_H */

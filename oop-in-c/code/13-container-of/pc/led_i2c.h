@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /*
  * led_i2c.h - I2C LED 子类 (ch13 版)
  *
@@ -21,6 +21,5 @@ struct led_i2c {
 int led_i2c_init(struct led_i2c *me, const char *name,
 		 uint8_t bus, uint8_t addr);
 
-extern const struct led_ops led_ops_i2c;
 
 #endif /* LED_I2C_H */

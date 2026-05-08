@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /**
  * @file  led_gpio.c
  * @brief GPIO 子类 init + 实现层 + led_ops_gpio 操作表
@@ -15,6 +15,8 @@
 
 #include "led_gpio.h"
 #include <stdio.h>
+
+static const struct led_ops led_ops_gpio;
 
 int led_gpio_init(struct led_gpio *me, const char *name, uint8_t pin)
 {
@@ -62,7 +64,7 @@ static int gpio_toggle(struct led_base *me)
  * const + 全局: 落 .rodata, 全程序唯一一份, 100 颗 GPIO LED 共享同一张
  * 12 字节的 ops 表. 链接器不准运行时被改成野指针.
  */
-const struct led_ops led_ops_gpio = {
+static const struct led_ops led_ops_gpio = {
 	.on     = gpio_on,
 	.off    = gpio_off,
 	.toggle = gpio_toggle,

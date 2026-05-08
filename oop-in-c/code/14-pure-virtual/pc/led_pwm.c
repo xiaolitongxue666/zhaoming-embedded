@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /*
  * led_pwm.c - PWM 子类 init + 实现层 + led_ops_pwm 操作表 (ch14 版)
  *
@@ -43,7 +43,7 @@ static int pwm_set_brightness(struct led_base *me, uint8_t brightness)
 	return 0;
 }
 
-const struct led_ops led_ops_pwm = {
+static const struct led_ops led_ops_pwm = {
 	.on             = pwm_on,
 	.off            = pwm_off,
 	.set_brightness = pwm_set_brightness,

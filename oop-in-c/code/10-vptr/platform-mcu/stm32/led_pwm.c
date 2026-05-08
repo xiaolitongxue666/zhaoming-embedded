@@ -1,9 +1,9 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /*
  * led_pwm.c - LED PWM 子类 STM32 端真机实现
  *
  * 这是子类内部的 STM32 真机版本 (片段, 不是完整工程). 完整 STM32 工程
- * 见附录 B (industrial/stm32_full).
+ * 见附录 B (Zephyr v3.7.0 LTS · stm32f4_disco).
  *
  * led_base 多了一个 ops 字段 (ch10 主题), PWM 子类实现一字不变. STM32
  * 上把 printf 模拟换成 __HAL_TIM_SET_COMPARE + HAL_TIM_PWM_Start / Stop
@@ -60,7 +60,7 @@ static int pwm_toggle(struct led_base *me)
 	return pwm_on(me);
 }
 
-const struct led_ops led_ops_pwm = {
+static const struct led_ops led_ops_pwm = {
 	.on     = pwm_on,
 	.off    = pwm_off,
 	.toggle = pwm_toggle,

@@ -1,9 +1,9 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /*
  * led_i2c.c - LED I2C 子类 STM32 端真机实现 (ch12 版)
  *
  * 这是子类内部的 STM32 真机版本 (片段, 不是完整工程). 完整 STM32 工程
- * 见附录 B (industrial/stm32_full).
+ * 见附录 B (Zephyr v3.7.0 LTS · stm32f4_disco).
  *
  * I2C LED 真实硬件场景: PCA9554 / TCA6408 这类 IO expander 通过 I2C
  * 拓展更多通道, 主控只发一次写寄存器命令就开 / 关一颗 LED.
@@ -45,7 +45,7 @@ static int i2c_off(struct led_base *me)
 	return 0;
 }
 
-const struct led_ops led_ops_i2c = {
+static const struct led_ops led_ops_i2c = {
 	.on  = i2c_on,
 	.off = i2c_off,
 };

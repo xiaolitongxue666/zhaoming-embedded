@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /**
  * @file  led_gpio.c
  * @brief GPIO 子类 init + 实现层 + led_ops_gpio 操作表
@@ -12,6 +12,8 @@
 
 #include "led_gpio.h"
 #include <stdio.h>
+
+static const struct led_ops led_ops_gpio;
 
 int led_gpio_init(struct led_gpio *me, const char *name, uint8_t pin)
 {
@@ -53,7 +55,7 @@ static int gpio_toggle(struct led_base *me)
 	return gpio_on(me);
 }
 
-const struct led_ops led_ops_gpio = {
+static const struct led_ops led_ops_gpio = {
 	.on     = gpio_on,
 	.off    = gpio_off,
 	.toggle = gpio_toggle,

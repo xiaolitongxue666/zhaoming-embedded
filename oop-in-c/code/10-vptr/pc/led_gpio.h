@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /**
  * @file  led_gpio.h
  * @brief LED GPIO 子类 -- ops 字段已在 led_base 里, 子类只装硬件参数
@@ -22,6 +22,5 @@ struct led_gpio {
 
 int led_gpio_init(struct led_gpio *me, const char *name, uint8_t pin);
 
-extern const struct led_ops led_ops_gpio;
 
 #endif /* LED_GPIO_H */

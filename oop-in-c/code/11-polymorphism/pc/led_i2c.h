@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /**
  * @file  led_i2c.h
  * @brief LED I2C 子类 -- 通过 I2C 总线写控制寄存器开/关
@@ -27,6 +27,5 @@ struct led_i2c {
 int led_i2c_init(struct led_i2c *me, const char *name,
                  uint8_t dev_addr, uint8_t reg);
 
-extern const struct led_ops led_ops_i2c;
 
 #endif /* LED_I2C_H */

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /**
  * @file  led_gpio.c
  * @brief GPIO 子类 init + 实现层 + led_ops_gpio 操作表 (ch12 版)
@@ -42,7 +42,7 @@ static int gpio_off(struct led_base *me)
 	return 0;
 }
 
-const struct led_ops led_ops_gpio = {
+static const struct led_ops led_ops_gpio = {
 	.on  = gpio_on,
 	.off = gpio_off,
 };

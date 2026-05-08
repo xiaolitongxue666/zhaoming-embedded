@@ -1,9 +1,9 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /*
  * led_pwm.c - LED PWM 子类 STM32 端真机实现 (ch13 版)
  *
  * 这是子类内部的 STM32 真机版本 (片段, 不是完整工程). 完整 STM32 工程
- * 见附录 B (industrial/stm32_full).
+ * 见附录 B (Zephyr v3.7.0 LTS · stm32f4_disco).
  *
  * pwm_xxx 函数体里第一行用 container_of 反推自己, 后面调真实 TIM PWM
  * 寄存器. duty 字段 0-100 (百分比) 转 CCR 值, ARR 假设 1000.
@@ -75,7 +75,7 @@ static int pwm_set_brightness(struct led_base *me, uint8_t brightness)
 	return 0;
 }
 
-const struct led_ops led_ops_pwm = {
+static const struct led_ops led_ops_pwm = {
 	.on             = pwm_on,
 	.off            = pwm_off,
 	.set_brightness = pwm_set_brightness,

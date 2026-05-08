@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+﻿/* SPDX-License-Identifier: MIT */
 /*
  * led_pwm.h - PWM LED 子类 (ch13 版)
  *
@@ -25,6 +25,5 @@ struct led_pwm {
 int led_pwm_init(struct led_pwm *me, const char *name,
 		 uint8_t channel, uint8_t duty);
 
-extern const struct led_ops led_ops_pwm;
 
 #endif /* LED_PWM_H */

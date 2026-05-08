@@ -28,7 +28,7 @@ ch01-ch10 早期章节都按这两份对照组织（PC + STM32）。
 
 例：`PA.13 = 0x0D`、`PD.12 = 0x3C`、`PI.14 = 0x8E`。
 
-这套编码和 `industrial/stm32_full/app/platform/arch/board/pin_board.c` 字节级一致。读者过渡到工业版只多一层「字符串名 → uint8_t」的解析。
+这套编码和 ch15 配套代码 `oop-in-c/code/15-platform/platform/arch/stm32/pin_board.c` 字节级一致。读者过渡到工业版只多一层「字符串名 → uint8_t」的解析。
 
 ## 编译运行（PC 版）
 
