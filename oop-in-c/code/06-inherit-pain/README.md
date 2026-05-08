@@ -37,8 +37,6 @@ struct motor {
     └── stm32/          STM32 真机版（用 PIN_NUM 编码）
 ```
 
-Linux 用户态完整工程见附录 C。
-
 ## 编译运行 (PC 版)
 
 ```bash

@@ -277,22 +277,7 @@ HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
 
 PC 模拟版和 STM32 真实版的接口几乎一字不差。前 4 章学的所有概念，在真实硬件上原样落地。
 
-## 5.10 你现在的代码在 Linux 用户态长什么样
-
-Linux 用户态没有 STM32 那种 BSRR 寄存器直写。从用户态到硬件的路径是这样：
-
-```c
-write("/sys/class/gpio/gpio13/value", "1")
-   -> kernel 调 gpio_chip 的 .set 方法
-   -> 具体 GPIO controller driver
-   -> 最终还是 BSRR 或类似的硬件寄存器
-```
-
-sysfs 的"把硬件当文件"机制怎么和内核的 `file_operations` + `gpio_chip` 衔接起来：`gpio_chip` 是第 16 章的内容，`file_operations` 是第 18 章 § 18.1 的内容。这一章先看到"用户态调用还是同一个套路"。
-
-完整工程见附录 C（新内核推荐 libgpiod 替代 sysfs，附录里展开）。
-
-## 5.11 工业代码里的对应
+## 5.10 工业代码里的对应
 
 我做的工业控制板项目里所有的驱动都按 HAL 这套路子组织。每个底层 driver 都有自己的 `<MOD>_TypeDef`、自己的 init/deinit、自己的命名前缀。
 
@@ -325,7 +310,7 @@ int ds2433_write(ds2433_t *me, uint32_t addr, const void *buf, size_t n);
 
 如果你有项目维护经验，应该能看出来：50 个驱动按这套路子写完，新人接手看一个文件就懂结构。这就是命名规范的复利效应。
 
-## 5.12 跑一遍
+## 5.11 跑一遍
 
 ```bash
 cd oop-in-c/code/05-hal-mapping/pc
@@ -364,7 +349,7 @@ make
 
 教学版用真实 HAL 命名跑了一个最小例子。所有概念对应关系一目了然。
 
-## 5.13 视频回放
+## 5.12 视频回放
 
 想听口播版的可以看 B 站这一期视频：
 

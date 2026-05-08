@@ -377,7 +377,7 @@ PWM 子类填了 `pwm_set_brightness`，按 duty 调亮度。GPIO 和 I2C 子类
 
 至于"`set_brightness` 字段为 NULL 怎么办"、"PWM 填、GPIO 不填这种'子类各自决定'怎么处理"，正是第 14 章「虚函数不实现 · 三种策略」的主题。这一章先把字段挂上，下一章展开机制。
 
-main.c 里有 `led_set_brightness(handles[1], 60)` 的调用，跑 demo 能看到 PWM 灯的 duty 从 50% 调到 60%、再调到 0%。具体输出见 § 13.12。
+main.c 里有 `led_set_brightness(handles[1], 60)` 的调用，跑 demo 能看到 PWM 灯的 duty 从 50% 调到 60%、再调到 0%。具体输出见 § 13.11。
 
 ### 13.8.6 配套代码文件组织：每个子类一个文件
 
@@ -404,11 +404,7 @@ container_of 在 STM32 上是同一个宏，编译产物就是 ARM Cortex-M 的 
 
 完整 STM32 snippet 见 [`oop-in-c/code/13-container-of/platform-mcu/stm32/`](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/13-container-of/platform-mcu/stm32/)（用 `PIN_NUM('A', 13)` 编码 + `_gpio_table` 查表）。完整跑通的 STM32 工程见附录 B。
 
-## 13.10 Linux 用户态完整工程
-
-Linux 用户态可以直接借 `<stddef.h>` 的 offsetof。绝大多数 user-space 项目自定义自己的 container_of 宏，比如 systemd、gobject、libnl 都各写一份，逻辑都一样。在 Linux 用户态写 OOP 风格 C 代码，container_of 这一招几乎是入场券。三种子类内部各自直接调 Linux 内核暴露的接口（GPIO 走 libgpiod，PWM 走 sysfs PWM，I2C 走 i2c-dev），container_of 这一招在哪个子类内部都用，跟平台无关，判断标准见 § 15.15。完整跑通的工程见附录 C。
-
-## 13.11 工业代码里的 container_of
+## 13.10 工业代码里的 container_of
 
 工业控制板 driver 里：
 
@@ -446,7 +442,7 @@ static int quad_read(struct encoder_base *me, int32_t *count)
 
 读完这一章，你拿到内核源码、读到 driver 源码、读到 GObject 源码，第一行的 container_of 不会再让你头疼。
 
-## 13.12 跑一遍
+## 13.11 跑一遍
 
 ```
 cd oop-in-c/code/13-container-of/pc
@@ -500,7 +496,7 @@ offsetof(struct led_i2c,  base) = 0
 - `[ERR] GPIO Pin10 ON (magic=0xCAFE)` 这一行里 `magic = 0xCAFE` 准确还原，证明 `container_of` 在 base 偏移 4 的布局下也能正确反推回 `struct led_gpio` 起点。
 - `--- breath stat ---` 段是 `led_set_brightness(handles[1], 60)` 和 `led_set_brightness(handles[1], 0)` 两次调用的输出。STAT 是 PWM 子类，填了 `pwm_set_brightness`，duty 从 60% 改到 0%。GPIO 和 I2C 子类没填这个字段，具体行为见第 14 章「虚函数不实现 · 三种策略」。
 
-## 13.13 视频回放
+## 13.12 视频回放
 
 > [《C 语言·向下转型｜container_of·从成员反推 struct》](https://www.bilibili.com/video/BV1LEo4B5EZu/)
 

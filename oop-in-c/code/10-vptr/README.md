@@ -50,8 +50,6 @@ platform-mcu/
     └── led_pwm.c      PWM 子类的 STM32 实现 (HAL_TIM_PWM_*)
 ```
 
-Linux 用户态完整工程见附录 C。
-
 ## 编译运行
 
 ```bash

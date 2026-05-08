@@ -23,7 +23,7 @@ platform-mcu/
     └── board_init.c             STM32 板级 init（pin = PIN_NUM('A', 13)）
 ```
 
-`platform-mcu/stm32/` 是参考片段，不参与 PC build。Linux 用户态完整工程见附录 C。pc 版的 GPIO 模拟实现来自仓库共享的 `oop-in-c/code/common/platform_pc.c`，跟 ch01 起一字不变。
+`platform-mcu/stm32/` 是参考片段，不参与 PC build。pc 版的 GPIO 模拟实现来自仓库共享的 `oop-in-c/code/common/platform_pc.c`，跟 ch01 起一字不变。
 
 ## 跑一遍
 

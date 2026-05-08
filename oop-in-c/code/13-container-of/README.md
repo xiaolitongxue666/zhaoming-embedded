@@ -28,7 +28,7 @@ platform-mcu/
     └── led_i2c.c                I2C  子类（container_of 反推） (HAL_I2C_Master_Transmit)
 ```
 
-`platform-mcu/stm32/` 是参考片段，不参与 PC build。Linux 用户态完整工程见附录 C。
+`platform-mcu/stm32/` 是参考片段，不参与 PC build。
 
 ch11+ 的 ops 表式 platform 抽象在 ch15 重构展开。
 

@@ -544,7 +544,7 @@ static const struct platform_pin_ops _stm32_pin_ops = {
 
 PIN 编码: 高 4 位 port (字母 A-Z 偏移), 低 4 位 num. PA.0 = 0x00, PD.12 = 0x3C, PI.14 = 0x8E。一份 `uint8_t` 同时编码 port 字母和 pin 号, 接口签名只有一个 `pin` 参数 -- 换 MCU 时接口不动, 解码表跟着换。
 
-## 15.11 你现在的代码在 Linux 用户态长什么样
+## 15.11 Linux 用户态对照·内核做完别再抽
 
 Linux 用户态实现这一套, **禁自抽 platform 层**, 内核已经做完。libgpiod / sysfs PWM / i2c-dev 这一组接口本身就是内核 driver model 暴露给用户态的 OOP 接口, 应用层再套一层 `platform_gpio_write -> gpiod_line_set_value` 就是过度封装, 没拦下任何变化, 反而多了一层没意义的 indirection。
 

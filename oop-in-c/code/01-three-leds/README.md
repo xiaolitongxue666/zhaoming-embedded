@@ -11,7 +11,7 @@
     └── stm32/          STM32 真机版（用 PIN_NUM 编码）
 ```
 
-ch01-ch10 早期章节都按这两份对照组织（PC + STM32）。Linux 用户态完整工程见附录 C。
+ch01-ch10 早期章节都按这两份对照组织（PC + STM32）。
 
 ## 教学要点
 
@@ -53,7 +53,3 @@ led_init(&blue_led,  PIN_NUM('A', 15));   /* PA.15 */
 ```
 
 板子上 LED 接到 PD.12，那就传 `PIN_NUM('D', 12)`。`led.c` 一行不动。
-
-## Linux 用户态完整工程
-
-完整跑通的 Linux 工程见 [附录 C](../../../book/附录/C-Linux完整工程.md)。

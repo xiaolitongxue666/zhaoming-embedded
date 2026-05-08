@@ -36,8 +36,6 @@ platform-mcu/
                         HAL_I2C_Master_Transmit)
 ```
 
-Linux 用户态完整工程见附录 C。
-
 ## 编译运行
 
 ```bash

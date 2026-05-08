@@ -21,7 +21,6 @@ fp(15);           /* 这次拨通 pwm_on */
 真实硬件上 `gpio_on` 长什么样：
 
 - STM32 HAL 实现：`platform-mcu/stm32/led_stm32.c`（用 `PIN_NUM` 编码）
-- Linux 用户态完整工程见附录 C
 
 snippet 给出"`gpio_on` 在不同平台上的实际指令"，但和函数指针主线本身没关系。
 

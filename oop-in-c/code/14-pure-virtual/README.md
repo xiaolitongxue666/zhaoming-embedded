@@ -32,7 +32,7 @@ platform-mcu/
     └── led_pwm.c                PWM  子类（三件套全填，HAL_TIM_PWM_*）
 ```
 
-`platform-mcu/stm32/` 是参考片段，不参与 PC build。Linux 用户态完整工程见附录 C。
+`platform-mcu/stm32/` 是参考片段，不参与 PC build。
 
 本章主线是 led_ops 这一层（子类层）的三种策略，platform 只是稳定背景，所以这里 platform 用函数式包装即可。platform 层从函数式演化成 ops 表是 ch15 的主题。
 

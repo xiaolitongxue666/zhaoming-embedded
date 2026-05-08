@@ -11,8 +11,6 @@
     └── stm32/          STM32 真机版（用 PIN_NUM 编码）
 ```
 
-Linux 用户态完整工程见附录 C。
-
 ## 教学要点
 
 ch01 的 `struct led` 字段公开但没有任何标记，外部 `me->pin = 999` 既
@@ -57,6 +55,6 @@ main.c 里有两段被注释的代码：
 
 理解这两层差别，就理解了 C 圈子的工程现实。
 
-## STM32 / Linux 完整工程
+## STM32 完整工程
 
-`platform-mcu/stm32/led_stm32.c` 是片段，需要套到 STM32CubeMX 工程里编译。完整跑通的 STM32 工程见 [附录 B](../../../book/附录/B-STM32完整工程.md)，完整跑通的 Linux 工程见 [附录 C](../../../book/附录/C-Linux完整工程.md)。
+`platform-mcu/stm32/led_stm32.c` 是片段，需要套到 STM32CubeMX 工程里编译。完整跑通的 STM32 工程见 [附录 B](../../../book/附录/B-STM32完整工程.md)。

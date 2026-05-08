@@ -486,7 +486,7 @@ MODULE_INIT(led_stm32_init);
 
 完整说明见 [`oop-in-c/code/17-initcall/platform-mcu/stm32/README.md`](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/17-initcall/platform-mcu/stm32/README.md)。
 
-## 17.11 你现在的代码在 Linux 上长什么样
+## 17.11 Linux 用户态对照·__attribute__((constructor)) 同款机制
 
 Linux 用户态代码（不写内核驱动）也能用同一招。glibc 的 `__attribute__((constructor))` 把函数指针塞进 `.init_array` 段，crt0 启动期遍历。等价于你的 `MODULE_INIT`：
 

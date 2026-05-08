@@ -332,13 +332,7 @@ void platform_gpio_write(uint8_t pin, bool value)
 
 本节用的是函数式包装的 platform 抽象层，是教学简化版（`platform_gpio_init / platform_gpio_write` 几个独立函数）。真正工业级的 platform 抽象用 ops 表的形式，把所有 platform 操作打包进一个 struct，应用层通过指针访问。第 16 章会把 platform 层按这个套路重构一遍，和工业代码对齐。
 
-## 10.8 你现在的代码在 Linux 用户态长什么样
-
-Linux 上 GPIO 子类内部直接调 libgpiod，应用层和 base 层一字不改（完整工程见附录 C）。Linux 用户态没有 platform 抽象层，内核 driver model 已经把 platform 抽象做完了，应用层再套一层是反工程（§ 15.15）。
-
-进程的 `.rodata` 段里多出 `led_ops_gpio / led_ops_pwm` 两张 const 表（每张 12 字节）。每个 LED 实例的 `.bss` 中多 4-8 字节的 `ops` 指针（32 位 4 字节，64 位 8 字节）。这一笔账和 PC / STM32 一样，跨平台一致。
-
-## 10.9 工业代码里的 base + ops 字段
+## 10.8 工业代码里的 base + ops 字段
 
 工业控制板项目里的 `led_base` 长这样：
 
@@ -383,7 +377,7 @@ int led_gpio_init(struct led_gpio *me, ...)
 
 这就是 Linux 内核 `struct file` 的设计骨架。每个打开的文件（`struct file *file`）通过 `file->f_op` 找到一张 ops 表（`file_operations`），里面装着 `read / write / ioctl` 等函数指针。各种文件系统（ext4 / NFS / procfs）各自填一张 ops 表，VFS 层通过 `file->f_op->...` 找到对应实现。机制和你这一章手写的一字不差，只是规模不同。
 
-## 10.10 跑一遍
+## 10.9 跑一遍
 
 ```bash
 cd oop-in-c/code/10-vptr/pc
@@ -398,7 +392,7 @@ make
 
 完整源码和实际输出见 [`oop-in-c/code/10-vptr/`](https://github.com/ZhaoChengBo/zhaoming-embedded/tree/master/oop-in-c/code/10-vptr/)。
 
-## 10.11 视频回放
+## 10.10 视频回放
 
 想听口播版的可以看 B 站这一期视频：
 
