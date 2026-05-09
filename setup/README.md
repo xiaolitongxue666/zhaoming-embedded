@@ -6,9 +6,13 @@
 
 推荐 MSYS2，最现代、最完整、和 Linux 体验一致。
 
-搜索引擎搜 MSYS2 官网下载 `msys2-x86_64-*.exe`，默认安装到 `C:\msys64`。启动 MSYS2 MinGW 64-bit 终端：
+搜索引擎搜 MSYS2 官网下载 `msys2-x86_64-*.exe`，默认安装到 `C:\msys64`。
+安装完从开始菜单 `MSYS2` 文件夹启动 `MSYS2 MINGW64` 终端：
 
 ```bash
+# 国内用户先换清华源，否则默认源经常超时
+sed -i "s#https\?://mirror.msys2.org/#https://mirrors.tuna.tsinghua.edu.cn/msys2/#g" /etc/pacman.d/mirrorlist*
+
 pacman -Syu                                    # 更新，首次会要求重启终端
 pacman -S mingw-w64-x86_64-gcc make            # 装 GCC + make
 ```
