@@ -23,6 +23,7 @@
 zhaoming-embedded/
 ├── book/                  在线书源码 (markdown)
 ├── oop-in-c/              第一本书每章配套代码包
+├── practice/              个人手写练习区（学习计划见 practice/LEARNING_PLAN.md）
 ├── industrial/            工业代码：Platform 层抽象、电机驱动骨架、完整 STM32 / Linux 工程
 ├── ...                    后续主题独立目录
 └── README.md              本文件
