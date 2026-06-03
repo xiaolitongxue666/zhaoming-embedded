@@ -63,4 +63,4 @@ _book/
 /push.bat
 
 # 封面素材源文件（HTML 切图源·不发布·只在仓库本地用）
-/cover_publication*.html
+/cover_publication*.html'*.gch'  
