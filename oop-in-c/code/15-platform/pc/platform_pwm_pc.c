@@ -1,14 +1,17 @@
 /* SPDX-License-Identifier: MIT */
 /*
- * platform_pwm_pc.c - PC 端 platform_pwm ops 实现 + 注册 (ch15 教学).
+ * platform_pwm_pc.c - PC 端 Platform 后端 + 注册 (ch15 教学).
  *
- * 角色和 platform/arch/stm32/pin_board.c 里 _stm32_pwm_* 同款, 区别只在:
- * STM32 端 _stm32_pwm_set_duty 调 __HAL_TIM_SET_COMPARE 写真实定时器
- * 比较寄存器, 这里翻译成 stdout printf. 同一份 led_pwm.c 子类源码字节级
- * 不动, 跨平台跑同一个 platform_pwm dispatch.
+ * 角色 = 真机 platform/arch/stm32/pwm_board.c 或 arch/nxp/pwm_board.c:
+ * 实现 ops 表 + 启动期 register 进 dispatcher. 区别只在 STM32 写 TIM 比较
+ * 寄存器, 这里 printf. 同一份 led_pwm.c 只调 platform_pwm_enable(), 不
+ * 知道下面是 PC 还是 HAL.
  *
- * 落地形态: 一张 static const struct platform_pwm_ops 表 + 一个启动期
- * 注册函数 platform_pc_pwm_init, 由 platform_init 调一次.
+ * 注册链:
+ *   platform_init() → platform_pc_pwm_init() → platform_pwm_register(&pc_pwm_ops)
+ *   → ../platform/platform_pwm.c 的 _g_ops
+ *
+ * Dispatcher / 四层架构说明见 15-platform/pc/README.md.
  */
 
 #include "platform/platform_pwm.h"

@@ -15,7 +15,12 @@
 #include "hal_gpio.h"
 #include <stdio.h>
 
-/* 三个 GPIO 端口实例（PC 上模拟硬件寄存器） */
+/* 三个 GPIO 端口实例（PC 上模拟硬件寄存器）
+ *
+ * 此处是定义（分配 BSS），gpio_typedef.h 里是 extern 声明 + GPIOA 宏。
+ * 真实芯片上这三块是 MMIO 固定地址，不占用 RAM；PC 用全局变量模拟。
+ * 数据归位在 HAL 实现 .c，对应 ch04 + 05-hal-mapping/pc/README.md。
+ */
 GPIO_TypeDef g_gpioa_regs;
 GPIO_TypeDef g_gpiob_regs;
 GPIO_TypeDef g_gpioc_regs;

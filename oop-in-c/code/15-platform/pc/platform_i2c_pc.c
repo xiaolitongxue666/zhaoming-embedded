@@ -17,6 +17,9 @@
  * led_board_init 调 platform_i2c_bus_get 拿到 bus 句柄, 喂给
  * led_i2c_init 装进 client.bus.
  *
+ * 角色 = 真机 platform/arch/<mcu>/i2c_board.c; 注册进
+ * ../platform/platform_i2c.c dispatcher. 详见 pc/README.md.
+ *
  * 输出格式:
  *   [I2C] addr=0x3C W len=2 data=00 01
  *   [I2C] addr=0x3C W len=2 data=00 00

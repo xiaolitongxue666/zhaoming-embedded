@@ -86,6 +86,8 @@ static void _nxp_pin_write(int32_t pin, int32_t value)
 
 PC 教学版四层架构, `make && ./demo` 直接在 PC 上跑出 GPIO + PWM + I2C 三盏灯混搭的开机自检 / 报警闪烁 / 状态指示流程。三盏灯过同一份父类接口 `led_on / led_off`, 落到不同子类实现, 最终调到 `platform_gpio_write` 等封装函数, 由 `../../common/platform_pc.c` 用 `printf` 模拟。
 
+**分层、dispatcher、启动顺序 vs 层号、Platform 层意义** 的详细说明见 [`pc/README.md`](pc/README.md)。
+
 ```
 cd pc
 make
@@ -93,6 +95,27 @@ make
 ```
 
 输出: 开机自检 -> 报警闪烁 -> 状态指示。三盏灯 (GPIO + PWM + I2C 混搭) 经过同一份 `led_on / led_off` 父类接口, 分发到不同子类。
+
+### pc/ 四层 (教学视角) vs 换 MCU 四层
+
+| pc/ 教学四层 (自上而下) | 换 MCU 视角四层 | 说明 |
+| --- | --- | --- |
+| ① `main.c` / `app.c` 应用 | 应用 | 业务不变 |
+| ② `led_board_init.c` 板级 BSP | (与应用一样通常不改) | 换 PCB 接线改这里 |
+| ③ `led_base.*` / `led_gpio.*` … 驱动 | `drivers/led/*` | 跨 MCU 不变 |
+| ④ `platform_init` + dispatcher + `platform_*_pc.c` | platform 接口 + `arch/<mcu>/` | 换 MCU 改后端 |
+
+层号按 **谁调用谁、离硬件远近** 编号, **不是** `main()` 执行顺序. Platform 虽是最底层, 但 `platform_init()` 必须 **最先** 跑 (给 dispatcher 注册 ops), 之后才是 `led_board_init()` 和应用代码.
+
+### Dispatcher (分发器)
+
+`platform/platform_pwm.c` / `platform_i2c.c` 维护 `_g_ops` / `_g_bus`: 启动期 `platform_pwm_register()` 把 PC 或 STM32 后端的 ops 表挂上去, 运行时 `platform_pwm_enable()` 等固定 API 内部 **转发** 到已注册实现. 与 ch11 `led_base` + `me->ops` 同构, 只是 ops 对象从 LED 子类换成了 MCU 后端. PC 端注册链: `main` → `platform_init()` → `platform_pc_pwm_init()` → `platform_pwm_register(&pc_pwm_ops)`.
+
+### 为何要 Platform 层 · 芯片隔离在哪
+
+**意义**: 把 STM32 / NXP / PC 的厂家差异关进 Platform 后端, `drivers/led/*` 只调 `platform_pwm_*` / `platform_i2c_*`, 换 MCU 时应用 + driver + dispatcher 源码不动.
+
+**芯片隔离层**: 就在 Platform **内部下半段** —— 真机 `platform/arch/<mcu>/{pin,pwm,i2c}_board.c`, PC 上对应 `pc/platform_pwm_pc.c` / `platform_i2c_pc.c` / `common/platform_pc.c`. 其下是厂家 HAL/CMSIS, 本项目一般 **不再** 自建第五层.
 
 ## `drivers/` + `platform/` + `platform/arch/<mcu>/` 是什么
 

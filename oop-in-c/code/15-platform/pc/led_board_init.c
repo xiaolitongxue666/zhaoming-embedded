@@ -19,6 +19,11 @@
  * GPIO -> PWM), 只需改本文件三行 (子类类型、init 调用、句柄绑定),
  * app.c 0 改动.
  *
+ * 板级层 (L2) 与 Platform (L4) 的分工: 本文件管 LED 模块的 pin/通道/
+ * 地址; Platform 管 MCU 厂家 API. 本文件在开机 init 运行; 运行时
+ * led_on 不经过本层 (App → Driver → Platform). 层号 vs 启动顺序见
+ * pc/README.md.
+ *
  * I2C 这一路 ch15 升级到了 bus + client 二层 (见 § 15.17.2):
  *   1) platform_init() 里把 PC bus 注册进 platform_i2c dispatcher
  *   2) led_board_init 调 platform_i2c_bus_get 拿 bus 句柄

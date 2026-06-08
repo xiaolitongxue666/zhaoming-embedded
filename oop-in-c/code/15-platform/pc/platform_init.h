@@ -14,6 +14,12 @@
  * platform_init() 把两个一次调完.
  *
  * 启动顺序 (main): platform_init() -> led_board_init() -> 应用代码.
+ * 注意: 层号自上而下 1=应用 … 4=Platform, 层号不等于执行顺序; Platform
+ * 虽是最底层, 但必须最先 platform_init() 给 dispatcher 注册 ops.
+ *
+ * Dispatcher: ../platform/platform_pwm.c / platform_i2c.c 存 _g_ops / _g_bus,
+ * 对外 platform_pwm_enable() 等固定 API, 对内转发到 platform_*_pc.c 注册
+ * 的后端. 详见 pc/README.md.
  *
  * platform_gpio (common/platform_pc.c) 是 ch01-ch14 一路用下来的
  * 简版 (直接定义 platform_gpio_init / write 4 个函数, 不走 ops 表

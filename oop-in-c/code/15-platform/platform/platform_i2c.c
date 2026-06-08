@@ -1,10 +1,19 @@
 /* SPDX-License-Identifier: MIT */
 /*
- * platform_i2c.c - I2C bus + client dispatcher (教学简化版).
+ * platform_i2c.c - I2C bus dispatcher (分发器, 教学简化版).
  *
- * 教学版只挂一条 bus (单 dispatcher). 工业版按 bus_name 走全局
- * platform_device 表, 一颗 MCU 上可同时跑 4 条 bus (i2c1 / i2c2 ...).
- * 见 industrial/platform_layer/platform_i2c.c.
+ * Dispatcher 角色同 platform_pwm.c: _g_bus 存已注册 bus; platform_i2c_transfer()
+ * 转发到 bus->ops->master_xfer. 启动期 platform_i2c_bus_register() 由
+ * platform_pc_i2c_init (PC) 或 arch/<mcu>/i2c_board.c (真机) 调用.
+ *
+ * 调用链 (PC):
+ *   led_i2c.c: platform_i2c_transfer(bus, &msg, 1)
+ *     → 本文件: bus->ops->master_xfer(...)
+ *       → platform_i2c_pc.c: _pc_i2c_master_xfer → printf
+ *
+ * 教学版只挂一条 bus. 工业版按 bus_name 走全局 platform_device 表,
+ * 一颗 MCU 上可同时跑 4 条 bus (i2c1 / i2c2 ...).
+ * 见 industrial/platform_layer/platform_i2c.c / 15-platform/pc/README.md.
  *
  * 锁: 工业版 master_xfer 全程持 osMutex 兜底多任务争用. 教学版省略,
  * 让读者把注意力放在二层抽象本身.

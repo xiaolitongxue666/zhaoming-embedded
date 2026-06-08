@@ -92,8 +92,13 @@ typedef struct {
  *   #define GPIOB  ((GPIO_TypeDef *)0x58020400UL)
  * 硬件寄存器映射到不同的物理地址。
  *
- * 我们的模拟：用全局变量代替硬件地址，效果一样：
- *   同一个 struct 定义，多个独立实例。
+ * PC 模拟：用全局变量代替硬件地址，效果一样 —— 同一 struct，多个独立
+ * 实例；GPIOA 等宏取地址 (&g_gpioa_regs)，对应 ch01 多实例 + me 指针。
+ *
+ * extern 声明 vs hal_gpio.c 里的定义（单一定义规则 ODR）：
+ *   本头文件只 extern 声明，让其他编译单元知道符号存在、能写 GPIOA 宏；
+ *   内存分配在 hal_gpio.c 一处完成。若在头文件直接定义变量，每个
+ *   #include 本头的 .c 都会重复定义，链接失败。详见 pc/README.md。
  */
 extern GPIO_TypeDef g_gpioa_regs;
 extern GPIO_TypeDef g_gpiob_regs;
