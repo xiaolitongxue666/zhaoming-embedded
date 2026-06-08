@@ -37,6 +37,9 @@ desktop.ini
 *.tmp
 *.bak
 
+# summary-project-memory 本地备份（/summary-memory 自动写入）
+.project-memory-backups/
+
 # mdbook 临时构建产物（每次 build 重新生成）
 _build/
 book/_book/
